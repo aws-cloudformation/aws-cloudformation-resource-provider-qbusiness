@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreateApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateApplicationResponse;
+import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationResponse;
@@ -191,7 +192,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .thenReturn(GetApplicationResponse.builder()
             .applicationId(APP_ID)
             .status(ApplicationStatus.FAILED)
-            .errorMessage("There was like, a problem.")
+            .error(ErrorDetail.builder().errorMessage("There was like, a problem.").build())
             .build()
         );
 

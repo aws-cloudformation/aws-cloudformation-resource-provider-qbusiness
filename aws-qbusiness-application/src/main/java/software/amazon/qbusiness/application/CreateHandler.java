@@ -3,6 +3,7 @@ package software.amazon.qbusiness.application;
 import static software.amazon.qbusiness.application.Constants.API_CREATE_APPLICATION;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
@@ -84,8 +85,8 @@ public class CreateHandler extends BaseHandlerStd {
     // handle failed state
 
     RuntimeException causeMessage = null;
-    if (StringUtils.isNotBlank(getAppResponse.errorMessage())) {
-      causeMessage = new RuntimeException(getAppResponse.errorMessage());
+    if (Objects.nonNull(getAppResponse.error()) && StringUtils.isNotBlank(getAppResponse.error().errorMessage())) {
+      causeMessage = new RuntimeException(getAppResponse.error().errorMessage());
     }
 
     throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getApplicationId(), causeMessage);

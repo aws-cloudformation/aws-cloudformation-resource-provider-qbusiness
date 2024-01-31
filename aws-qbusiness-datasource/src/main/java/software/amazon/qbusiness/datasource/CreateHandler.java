@@ -3,6 +3,7 @@ package software.amazon.qbusiness.datasource;
 import static software.amazon.qbusiness.datasource.Constants.API_CREATE_DATASOURCE;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.CreateDataSourceRequest;
@@ -66,7 +67,7 @@ public class CreateHandler extends BaseHandlerStd {
                 .handleError((createReq, error, client, model, context) -> handleError(
                     createReq, model, error, context, logger, API_CREATE_DATASOURCE
                 ))
-                .done(response -> ProgressEvent.progress(reqModel.toBuilder().dataSourceId(response.id()).build(), callbackContext))
+                .done(response -> ProgressEvent.progress(reqModel.toBuilder().dataSourceId(response.dataSourceId()).build(), callbackContext))
         )
         .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
   }
@@ -101,12 +102,12 @@ public class CreateHandler extends BaseHandlerStd {
 
     logger.log("[INFO] %s with ID: %s, for App: %s, IndexId: %s, stack ID: %s has failed to stabilize with message: %s".formatted(
         ResourceModel.TYPE_NAME, model.getDataSourceId(), model.getApplicationId(), model.getIndexId(), request.getStackId(),
-        getDataSourceRes.errorMessage()
+        Objects.nonNull(getDataSourceRes.error()) ? getDataSourceRes.error().errorMessage() : null
     ));
 
     InternalServerException causeError = null;
-    if (StringUtils.isNotBlank(getDataSourceRes.errorMessage())) {
-      causeError = InternalServerException.builder().message(getDataSourceRes.errorMessage()).build();
+    if (Objects.nonNull(getDataSourceRes.error()) && StringUtils.isNotBlank(getDataSourceRes.error().errorMessage())) {
+      causeError = InternalServerException.builder().message(getDataSourceRes.error().errorMessage()).build();
     }
 
     throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getDataSourceId(), causeError);

@@ -1,7 +1,7 @@
 package software.amazon.qbusiness.datasource;
 
-import static software.amazon.qbusiness.datasource.translators.DataSourceConfigurationTranslator.fromServiceDataSourceConfiguration;
-import static software.amazon.qbusiness.datasource.translators.DataSourceConfigurationTranslator.toServiceDataSourceConfiguration;
+import static software.amazon.qbusiness.datasource.translators.DocumentConverter.convertDocumentToMap;
+import static software.amazon.qbusiness.datasource.translators.DocumentConverter.convertToMapToDocument;
 import static software.amazon.qbusiness.datasource.translators.DocumentEnrichmentTranslator.fromServiceDocEnrichmentConf;
 import static software.amazon.qbusiness.datasource.translators.DocumentEnrichmentTranslator.toServiceDocEnrichmentConf;
 
@@ -44,11 +44,11 @@ public class Translator {
         .displayName(model.getDisplayName())
         .description(model.getDescription())
         .roleArn(model.getRoleArn())
-        .schedule(model.getSchedule())
+        .syncSchedule(model.getSyncSchedule())
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .vpcConfiguration(toServiceDataSourceVpcConfiguration(model.getVpcConfiguration()))
-        .configuration(toServiceDataSourceConfiguration(model.getConfiguration()))
-        .customDocumentEnrichmentConfiguration(toServiceDocEnrichmentConf(model.getCustomDocumentEnrichmentConfiguration()))
+        .configuration(convertToMapToDocument(model.getConfiguration()))
+        .documentEnrichmentConfiguration(toServiceDocEnrichmentConf(model.getDocumentEnrichmentConfiguration()))
         .build();
   }
 
@@ -82,12 +82,12 @@ public class Translator {
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
         .roleArn(awsResponse.roleArn())
-        .schedule(awsResponse.schedule())
-        .type(awsResponse.typeAsString())
+        .syncSchedule(awsResponse.syncSchedule())
+        .type(awsResponse.type())
         .status(awsResponse.statusAsString())
         .vpcConfiguration(fromServiceDataSourceVpcConfiguration(awsResponse.vpcConfiguration()))
-        .configuration(fromServiceDataSourceConfiguration(awsResponse.configuration()))
-        .customDocumentEnrichmentConfiguration(fromServiceDocEnrichmentConf(awsResponse.customDocumentEnrichmentConfiguration()))
+        .configuration(convertDocumentToMap(awsResponse.configuration()))
+        .documentEnrichmentConfiguration(fromServiceDocEnrichmentConf(awsResponse.documentEnrichmentConfiguration()))
         .build();
   }
 
@@ -166,10 +166,10 @@ public class Translator {
         .description(model.getDescription())
         .displayName(model.getDisplayName())
         .roleArn(model.getRoleArn())
-        .schedule(model.getSchedule())
+        .syncSchedule(model.getSyncSchedule())
         .vpcConfiguration(toServiceDataSourceVpcConfiguration(model.getVpcConfiguration()))
-        .configuration(toServiceDataSourceConfiguration(model.getConfiguration()))
-        .customDocumentEnrichmentConfiguration(toServiceDocEnrichmentConf(model.getCustomDocumentEnrichmentConfiguration()))
+        .configuration(convertToMapToDocument(model.getConfiguration()))
+        .documentEnrichmentConfiguration(toServiceDocEnrichmentConf(model.getDocumentEnrichmentConfiguration()))
         .build();
   }
 

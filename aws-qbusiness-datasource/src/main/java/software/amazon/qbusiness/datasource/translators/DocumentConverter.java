@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import software.amazon.awssdk.core.document.Document;
 import software.amazon.awssdk.utils.ImmutableMap;
@@ -16,6 +17,9 @@ public final class DocumentConverter {
   }
 
   public static Map<String, Object> convertDocumentToMap(Document document) {
+    if (Objects.isNull(document)) {
+      return null;
+    }
     if (!document.isMap()) {
       throw new CfnGeneralServiceException("Upstream service returned an unexpected template document.");
     }

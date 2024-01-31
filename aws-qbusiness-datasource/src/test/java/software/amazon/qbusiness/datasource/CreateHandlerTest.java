@@ -35,6 +35,7 @@ import software.amazon.awssdk.services.qbusiness.model.CreateDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateDataSourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
 import software.amazon.awssdk.services.qbusiness.model.DocumentEnrichmentConditionOperator;
+import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
@@ -93,25 +94,22 @@ public class CreateHandlerTest extends AbstractTestBase {
         .displayName("Name Name")
         .description("We are groot")
         .roleArn("roleyroley")
-        .schedule("0 11 * * 4")
+        .syncSchedule("0 11 * * 4")
         .vpcConfiguration(DataSourceVpcConfiguration.builder()
             .securityGroupIds(List.of("secur1", "secure2"))
             .subnetIds(List.of("sub1", "sub2"))
             .build())
-        .configuration(DataSourceConfiguration.builder()
-            .templateConfiguration(TemplateConfiguration.builder()
-                .template(Map.of(
+        .configuration(
+            Map.of(
                     "Type", "WebcrawlerV2",
                     "Links", List.of("link1", "link2"),
                     "depth", 50,
                     "overrides", Map.of(
                         "a", 10
                     )
-                ))
-                .build())
-            .build()
+                )
         )
-        .customDocumentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
+        .documentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
             .preExtractionHookConfiguration(HookConfiguration.builder()
                 .roleArn("extractrole")
                 .lambdaArn("lambda")
@@ -135,7 +133,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     when(sdkClient.createDataSource(any(CreateDataSourceRequest.class)))
         .thenReturn(CreateDataSourceResponse.builder()
-            .id(DATA_SOURCE_ID)
+            .dataSourceId(DATA_SOURCE_ID)
             .build()
         );
     when(sdkClient.listTagsForResource(any(ListTagsForResourceRequest.class))).thenReturn(ListTagsForResourceResponse.builder()
@@ -180,7 +178,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     ));
 
     CreateDataSourceRequest argCreateReq = createReqCaptor.getValue();
-    Document template = argCreateReq.configuration().templateConfiguration().template();
+    Document template = argCreateReq.configuration();
 
     assertThat(template).isEqualTo(Document.fromMap(Map.of(
         "Type", Document.fromString("WebcrawlerV2"),
@@ -236,7 +234,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .indexId(INDEX_ID)
                 .dataSourceId(DATA_SOURCE_ID)
                 .status(DataSourceStatus.FAILED)
-                .errorMessage("Such error, very fail")
+                .error(ErrorDetail.builder().errorMessage("Such error, very fail").build())
                 .build()
         );
 

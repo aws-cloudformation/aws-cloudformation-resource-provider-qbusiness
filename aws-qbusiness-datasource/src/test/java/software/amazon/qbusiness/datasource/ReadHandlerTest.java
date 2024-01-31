@@ -7,6 +7,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static software.amazon.qbusiness.datasource.translators.DocumentConverter.convertToMapToDocument;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -27,9 +28,7 @@ import org.mockito.MockitoAnnotations;
 import software.amazon.awssdk.core.document.Document;
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
-import software.amazon.awssdk.services.qbusiness.model.DataSourceConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
-import software.amazon.awssdk.services.qbusiness.model.DataSourceType;
 import software.amazon.awssdk.services.qbusiness.model.DataSourceVpcConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.DocumentAttributeCondition;
 import software.amazon.awssdk.services.qbusiness.model.DocumentAttributeTarget;
@@ -46,7 +45,6 @@ import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.qbusiness.model.TemplateConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -116,25 +114,20 @@ public class ReadHandlerTest extends AbstractTestBase {
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(DataSourceStatus.ACTIVE)
             .roleArn("role1")
-            .schedule("0 12 * * 3")
-            .type(DataSourceType.S3)
+            .syncSchedule("0 12 * * 3")
+            .type("S3")
             .vpcConfiguration(DataSourceVpcConfiguration.builder()
                 .securityGroupIds("sec1", "sec2")
                 .subnetIds("sub1", "sub2")
                 .build())
-            .configuration(DataSourceConfiguration.builder()
-                .templateConfiguration(TemplateConfiguration.builder()
-                    .template(Document.fromMap(
-                        Map.of(
-                            "BucketName", Document.fromString("TheBucket"),
-                            "AnotherOne", Document.fromMap(Map.of(
-                                "Hello", Document.fromString("World")
-                            ))
-                        )
-                    ))
-                    .build())
-                .build())
-            .customDocumentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
+            .configuration(Document.fromMap((
+                Map.of(
+                    "BucketName", Document.fromString("TheBucket"),
+                    "AnotherOne", Document.fromMap(Map.of(
+                        "Hello", Document.fromString("World")))
+                )))
+            )
+            .documentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
                 .inlineConfigurations(InlineDocumentEnrichmentConfiguration.builder()
                     .target(DocumentAttributeTarget.builder()
                         .key("akey")
@@ -203,7 +196,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     ));
 
     var resultModel = responseProgress.getResourceModel();
-    Map<String, Object> template = resultModel.getConfiguration().getTemplateConfiguration().getTemplate();
+    Map<String, Object> template = resultModel.getConfiguration();
     assertThat(template.get("BucketName")).isEqualTo("TheBucket");
     assertThat(template.get("AnotherOne")).isEqualTo(Map.of(
         "Hello", "World"
@@ -256,8 +249,8 @@ public class ReadHandlerTest extends AbstractTestBase {
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .status(DataSourceStatus.ACTIVE)
         .roleArn("role1")
-        .schedule("0 12 * * 3")
-        .type(DataSourceType.S3)
+        .syncSchedule("0 12 * * 3")
+        .type("S3")
         .build()
     );
     when(sdkClient.listTagsForResource(any(ListTagsForResourceRequest.class))).thenThrow(serviceError);

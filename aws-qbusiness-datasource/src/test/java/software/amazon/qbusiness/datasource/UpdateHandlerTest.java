@@ -93,20 +93,17 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .applicationId(APP_ID)
         .indexId(INDEX_ID)
         .dataSourceId(DATA_SOURCE_ID)
-        .schedule("0 11 * * 4")
+        .syncSchedule("0 11 * * 4")
         .displayName("oldname")
         .description("old desc")
         .roleArn("old role")
-        .configuration(DataSourceConfiguration.builder()
-            .templateConfiguration(TemplateConfiguration.builder()
-                .template(Map.of(
-                    "depth", 10,
-                    "thing", Map.of(
-                        "a", 5
+        .configuration(
+            Map.of(
+                "depth", 10,
+                "thing", Map.of(
+                    "a", 5
                     )
-                ))
-                .build())
-            .build()
+                )
         )
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
@@ -119,27 +116,24 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .applicationId(APP_ID)
         .indexId(INDEX_ID)
         .dataSourceId(DATA_SOURCE_ID)
-        .schedule("0 12 * * 1")
+        .syncSchedule("0 12 * * 1")
         .displayName("new-name")
         .description("new desc")
         .roleArn("new role")
-        .configuration(DataSourceConfiguration.builder()
-            .templateConfiguration(TemplateConfiguration.builder()
-                .template(Map.of(
+        .configuration(
+            Map.of(
                     "depth", 10,
                     "thing", Map.of(
                         "a", 5
                     )
-                ))
-                .build())
-            .build()
+                )
         )
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
             Tag.builder().key("iwillchange").value("nowanewvalue").build(),
             Tag.builder().key("iamnew").value("overhere").build()
         ))
-        .customDocumentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
+        .documentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
             .inlineConfigurations(List.of(InlineDocumentEnrichmentConfiguration.builder()
                 .documentContentOperator(DocumentContentOperator.DELETE.toString())
                 .target(DocumentAttributeTarget.builder()
@@ -227,12 +221,12 @@ public class UpdateHandlerTest extends AbstractTestBase {
     verify(tagHelper).shouldUpdateTags(any());
 
     var updateReqArgument = updateReqCaptor.getValue();
-    assertThat(updateReqArgument.schedule()).isEqualTo(updateModel.getSchedule());
+    assertThat(updateReqArgument.syncSchedule()).isEqualTo(updateModel.getSyncSchedule());
     assertThat(updateReqArgument.displayName()).isEqualTo(updateModel.getDisplayName());
     assertThat(updateReqArgument.description()).isEqualTo(updateModel.getDescription());
     assertThat(updateReqArgument.roleArn()).isEqualTo(updateModel.getRoleArn());
 
-    var updateInlineConf = updateReqArgument.customDocumentEnrichmentConfiguration().inlineConfigurations().get(0);
+    var updateInlineConf = updateReqArgument.documentEnrichmentConfiguration().inlineConfigurations().get(0);
     assertThat(updateInlineConf.documentContentOperator()).isEqualTo(DocumentContentOperator.DELETE);
 
     var tagResourceRequest = tagReqCaptor.getValue();

@@ -28,7 +28,6 @@ import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreateRetrieverRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateRetrieverResponse;
-import software.amazon.awssdk.services.qbusiness.model.DocumentRelevanceOverrideConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverResponse;
@@ -36,7 +35,6 @@ import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
 import software.amazon.awssdk.services.qbusiness.model.KendraIndexConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.Relevance;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.qbusiness.model.RetrieverConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.Tag;
@@ -55,9 +53,8 @@ public class CreateHandlerTest extends AbstractTestBase {
   private static final String RETRIEVER_ID = "RetrieverId";
   private static final String RETRIEVER_NAME = "RetrieverName";
   private static final String RETRIEVER_TYPE = "KENDRA_INDEX";
-  private static final String RETRIEVER_STATE = "ACTIVE";
+  private static final String RETRIEVER_STATUS = "ACTIVE";
   private static final String INDEX_ID = "IndexId";
-  private static final String RELEVANCE_OVERRIDE_NAME = "relevance_override";
   private static final String ROLE_ARN = "role-1";
   private static final String CLIENT_TOKEN = "client-token";
   private static final Long CREATED_TIME = 1697824935000L;
@@ -90,19 +87,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     proxyClient = MOCK_PROXY(proxy, sdkClient);
     this.underTest = new CreateHandler(testBackOff);
 
-    Relevance relevance = Relevance.builder()
-        .duration("duration")
-        .freshness(true)
-        .importance(3)
-        .rankOrder("ascending")
-        .valueImportanceMap(Map.of("mapKey", 5))
-        .build();
-    DocumentRelevanceOverrideConfiguration documentRelevanceOverrideConfiguration = DocumentRelevanceOverrideConfiguration.builder()
-        .name(RELEVANCE_OVERRIDE_NAME)
-        .relevance(relevance)
-        .build();
     KendraIndexConfiguration kendraIndexConfiguration = KendraIndexConfiguration.builder()
-        .documentRelevanceOverrideConfigurations(documentRelevanceOverrideConfiguration)
         .indexId(INDEX_ID)
         .build();
     retrieverConfiguration = RetrieverConfiguration.builder()
@@ -144,7 +129,7 @@ public class CreateHandlerTest extends AbstractTestBase {
             .retrieverId(RETRIEVER_ID)
             .displayName(RETRIEVER_NAME)
             .type(RETRIEVER_TYPE)
-            .state(RETRIEVER_STATE)
+            .status(RETRIEVER_STATUS)
             .configuration(retrieverConfiguration)
             .roleArn(ROLE_ARN)
             .createdAt(Instant.ofEpochMilli(CREATED_TIME))
@@ -176,7 +161,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getApplicationId()).isEqualTo(APP_ID);
     assertThat(resultModel.getRetrieverId()).isEqualTo(RETRIEVER_ID);
     assertThat(resultModel.getType()).isEqualTo(RETRIEVER_TYPE);
-    assertThat(resultModel.getState()).isEqualTo(RETRIEVER_STATE);
+    assertThat(resultModel.getStatus()).isEqualTo(RETRIEVER_STATUS);
     assertThat(resultModel.getDisplayName()).isEqualTo(RETRIEVER_NAME);
     assertThat(resultModel.getConfiguration()).isEqualTo(Translator.fromServiceRetrieverConfiguration(retrieverConfiguration));
     assertThat(resultModel.getRoleArn()).isEqualTo(ROLE_ARN);

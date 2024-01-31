@@ -77,7 +77,7 @@ public class Translator {
         .applicationId(awsResponse.applicationId())
         .retrieverId(awsResponse.retrieverId())
         .type(awsResponse.typeAsString())
-        .state(awsResponse.stateAsString())
+        .status(awsResponse.statusAsString())
         .displayName(awsResponse.displayName())
         .configuration(fromServiceRetrieverConfiguration(awsResponse.configuration()))
         .roleArn(awsResponse.roleArn())
@@ -252,8 +252,6 @@ public class Translator {
 
     return software.amazon.awssdk.services.qbusiness.model.KendraIndexConfiguration.builder()
         .indexId(modelKendraIndexConfiguration.getIndexId())
-        .documentRelevanceOverrideConfigurations(
-            toServiceDocumentRelevanceOverrideConfigurations(modelKendraIndexConfiguration.getDocumentRelevanceOverrideConfigurations()))
         .build();
   }
 
@@ -267,52 +265,6 @@ public class Translator {
     return software.amazon.awssdk.services.qbusiness.model.NativeIndexConfiguration.builder()
         .indexId(modelData.getIndexId())
         .build();
-  }
-
-  static List<software.amazon.awssdk.services.qbusiness.model.DocumentRelevanceOverrideConfiguration> toServiceDocumentRelevanceOverrideConfigurations(
-      List<DocumentRelevanceOverrideConfiguration> modelDocumentRelevanceOverrideConfigurations
-  ) {
-    if (modelDocumentRelevanceOverrideConfigurations == null) {
-      return null;
-    }
-
-    return modelDocumentRelevanceOverrideConfigurations.stream().map(config ->
-        software.amazon.awssdk.services.qbusiness.model.DocumentRelevanceOverrideConfiguration.builder()
-            .name(config.getName())
-            .relevance(toServiceRelevance(config.getRelevance()))
-            .build()
-    ).collect(toList());
-  }
-
-  static software.amazon.awssdk.services.qbusiness.model.Relevance toServiceRelevance(
-      Relevance modelRelevance
-  ) {
-    if (modelRelevance == null) {
-      return null;
-    }
-
-    return software.amazon.awssdk.services.qbusiness.model.Relevance.builder()
-        .freshness(modelRelevance.getFreshness())
-        .duration(modelRelevance.getDuration())
-        .importance(modelRelevance.getImportance().intValue())
-        .rankOrder(modelRelevance.getRankOrder())
-        .valueImportanceMap(toServiceValueImportanceMap(modelRelevance.getValueImportanceMap()))
-        .build();
-  }
-
-  static Map<String, Integer> toServiceValueImportanceMap(
-      Map<String, Double> modelValueImportanceMap
-  ) {
-    if (modelValueImportanceMap == null) {
-      return null;
-    }
-    Map<String, Integer> map = new HashMap<>();
-
-    for (Map.Entry<String, Double> entry : modelValueImportanceMap.entrySet()) {
-      map.put(entry.getKey(), entry.getValue().intValue());
-    }
-
-    return map;
   }
 
   static RetrieverConfiguration fromServiceRetrieverConfiguration(
@@ -336,55 +288,7 @@ public class Translator {
 
     return KendraIndexConfiguration.builder()
         .indexId(serviceKendraIndexConfiguration.indexId())
-        .documentRelevanceOverrideConfigurations(
-            fromServiceDocumentRelevanceOverrideConfigurations(serviceKendraIndexConfiguration.documentRelevanceOverrideConfigurations()))
         .build();
-  }
-
-  static List<DocumentRelevanceOverrideConfiguration> fromServiceDocumentRelevanceOverrideConfigurations(
-      List<software.amazon.awssdk.services.qbusiness.model.DocumentRelevanceOverrideConfiguration> serviceDocumentRelevanceOverrideConfigurations
-  ) {
-    if (serviceDocumentRelevanceOverrideConfigurations == null) {
-      return null;
-    }
-
-    return serviceDocumentRelevanceOverrideConfigurations.stream().map(config ->
-        DocumentRelevanceOverrideConfiguration.builder()
-            .name(config.name())
-            .relevance(fromServiceRelevance(config.relevance()))
-            .build()
-    ).collect(toList());
-  }
-
-  static Relevance fromServiceRelevance(
-      software.amazon.awssdk.services.qbusiness.model.Relevance serviceRelevance
-  ) {
-    if (serviceRelevance == null) {
-      return null;
-    }
-
-    return Relevance.builder()
-        .freshness(serviceRelevance.freshness())
-        .duration(serviceRelevance.duration())
-        .importance(serviceRelevance.importance().doubleValue())
-        .rankOrder(serviceRelevance.rankOrderAsString())
-        .valueImportanceMap(fromServiceValueImportanceMap(serviceRelevance.valueImportanceMap()))
-        .build();
-  }
-
-  static Map<String, Double> fromServiceValueImportanceMap(
-      Map<String, Integer> serviceValueImportanceMap
-  ) {
-    if (serviceValueImportanceMap == null) {
-      return null;
-    }
-    Map<String, Double> map = new HashMap<>();
-
-    for (Map.Entry<String, Integer> entry : serviceValueImportanceMap.entrySet()) {
-      map.put(entry.getKey(), entry.getValue().doubleValue());
-    }
-
-    return map;
   }
 
   static String instantToString(Instant instant) {

@@ -11,13 +11,11 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
-import software.amazon.awssdk.services.qbusiness.model.DocumentRelevanceOverrideConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverResponse;
 import software.amazon.awssdk.services.qbusiness.model.KendraIndexConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.Relevance;
 import software.amazon.awssdk.services.qbusiness.model.RetrieverConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceResponse;
@@ -54,7 +52,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
   private static final String RETRIEVER_ID = "RetrieverId";
   private static final String RETRIEVER_NAME = "RetrieverName";
   private static final String INDEX_ID = "IndexId";
-  private static final String RELEVANCE_OVERRIDE_NAME = "relevance_override";
+  private static final String INDEX_ID_NEW = "IndexIdNew";
   private static final String ROLE_ARN = "role-1";
   private static final String CLIENT_TOKEN = "client-token";
   @Mock
@@ -87,39 +85,15 @@ public class UpdateHandlerTest extends AbstractTestBase {
     proxyClient = MOCK_PROXY(proxy, sdkClient);
     this.underTest = new UpdateHandler(testBackOff, tagHelper);
 
-    Relevance previousRelevance = Relevance.builder()
-        .duration("duration")
-        .freshness(true)
-        .importance(3)
-        .rankOrder("ascending")
-        .valueImportanceMap(Map.of("mapKey", 5))
-        .build();
-    DocumentRelevanceOverrideConfiguration previousDocumentRelevanceOverrideConfiguration = DocumentRelevanceOverrideConfiguration.builder()
-        .name(RELEVANCE_OVERRIDE_NAME)
-        .relevance(previousRelevance)
-        .build();
     KendraIndexConfiguration previousKendraIndexConfiguration = KendraIndexConfiguration.builder()
-        .documentRelevanceOverrideConfigurations(previousDocumentRelevanceOverrideConfiguration)
         .indexId(INDEX_ID)
         .build();
     RetrieverConfiguration previousRetrieverConfiguration = RetrieverConfiguration.builder()
         .kendraIndexConfiguration(previousKendraIndexConfiguration)
         .build();
 
-    Relevance relevance = Relevance.builder()
-        .duration("duration2")
-        .freshness(true)
-        .importance(4)
-        .rankOrder("descending")
-        .valueImportanceMap(Map.of("mapKey", 3))
-        .build();
-    DocumentRelevanceOverrideConfiguration documentRelevanceOverrideConfiguration = DocumentRelevanceOverrideConfiguration.builder()
-        .name(RELEVANCE_OVERRIDE_NAME)
-        .relevance(relevance)
-        .build();
     KendraIndexConfiguration kendraIndexConfiguration = KendraIndexConfiguration.builder()
-        .documentRelevanceOverrideConfigurations(documentRelevanceOverrideConfiguration)
-        .indexId(INDEX_ID)
+        .indexId(INDEX_ID_NEW)
         .build();
     RetrieverConfiguration updatedRetrieverConfiguration = RetrieverConfiguration.builder()
         .kendraIndexConfiguration(kendraIndexConfiguration)

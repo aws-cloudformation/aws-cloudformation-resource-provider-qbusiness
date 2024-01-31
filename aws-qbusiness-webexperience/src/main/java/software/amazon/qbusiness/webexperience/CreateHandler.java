@@ -3,6 +3,7 @@ package software.amazon.qbusiness.webexperience;
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.CreateWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateWebExperienceResponse;
+import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
 import software.amazon.awssdk.services.qbusiness.model.GetWebExperienceResponse;
 import software.amazon.awssdk.services.qbusiness.model.UpdateWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateWebExperienceResponse;
@@ -17,6 +18,7 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import static software.amazon.qbusiness.webexperience.Constants.API_CREATE_WEB_EXPERIENCE;
 import static software.amazon.qbusiness.webexperience.Constants.API_UPDATE_WEB_EXPERIENCE;
@@ -115,8 +117,9 @@ public class CreateHandler extends BaseHandlerStd {
     // handle failed state
 
     RuntimeException causeMessage = null;
-    if (StringUtils.isNotBlank(getWebExperienceResponse.error())) {
-      causeMessage = new RuntimeException(getWebExperienceResponse.error());
+    ErrorDetail error = getWebExperienceResponse.error();
+    if (Objects.nonNull(error) && StringUtils.isNotBlank(error.errorMessage())) {
+      causeMessage = new RuntimeException(error.errorMessage());
     }
 
     throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString(), causeMessage);

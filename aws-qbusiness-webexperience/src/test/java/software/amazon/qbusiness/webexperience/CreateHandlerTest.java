@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreateWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateWebExperienceResponse;
+import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetWebExperienceResponse;
@@ -309,7 +310,7 @@ public class CreateHandlerTest extends AbstractTestBase {
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .title("This is a title of the web experience.")
             .subtitle("This is a subtitle of the web experience.")
-            .error("There was a problem in get web experience.")
+            .error(ErrorDetail.builder().errorMessage("There was a problem in get web experience.").build())
             .status(WebExperienceStatus.FAILED)
             .authenticationConfiguration(software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration.builder()
                 .samlConfiguration(software.amazon.awssdk.services.qbusiness.model.SamlConfiguration.builder()

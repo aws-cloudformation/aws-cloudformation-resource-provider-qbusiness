@@ -102,7 +102,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
             .type(AttributeType.DATE.toString())
             .build()))
         .status(IndexStatus.ACTIVE.name())
-        .capacityUnitConfiguration(new StorageCapacityUnitConfiguration(10D))
+        .capacityConfiguration(new IndexCapacityConfiguration(10D))
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
             Tag.builder().key("toremove").value("nolongerthere").build(),
@@ -120,7 +120,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
             .search(Status.ENABLED.toString())
             .type(AttributeType.STRING.toString())
             .build()))
-        .capacityUnitConfiguration(new StorageCapacityUnitConfiguration(100D))
+        .capacityConfiguration(new IndexCapacityConfiguration(100D))
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
             Tag.builder().key("iwillchange").value("nowanewvalue").build(),
@@ -199,7 +199,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(updateAppRequest.documentAttributeConfigurations().get(0).name()).isEqualTo("DocumentAttributeName2");
     assertThat(updateAppRequest.documentAttributeConfigurations().get(0).searchAsString()).isEqualTo(Status.ENABLED.toString());
     assertThat(updateAppRequest.documentAttributeConfigurations().get(0).typeAsString()).isEqualTo(AttributeType.STRING.toString());
-    assertThat(updateAppRequest.capacityUnitConfiguration().units().intValue()).isEqualTo(100);
+    assertThat(updateAppRequest.capacityConfiguration().units().intValue()).isEqualTo(100);
 
     verify(sdkClient, times(2)).getIndex(
         argThat((ArgumentMatcher<GetIndexRequest>) t -> t.applicationId().equals(APP_ID) && t.indexId().equals(INDEX_ID))

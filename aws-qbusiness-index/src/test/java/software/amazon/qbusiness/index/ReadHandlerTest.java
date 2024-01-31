@@ -114,7 +114,7 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .search(Status.ENABLED.toString())
                 .type(AttributeType.DATE.toString())
                 .build()))
-            .capacityUnitConfiguration(software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration.builder()
+            .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
                 .units(10)
                 .build())
             .build());
@@ -148,7 +148,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getUpdatedAt()).isEqualTo("2023-10-20T22:02:15Z");
     assertThat(resultModel.getDescription()).isEqualTo("This is a description of the index.");
     assertThat(resultModel.getStatus()).isEqualTo(IndexStatus.ACTIVE.toString());
-    assertThat(resultModel.getCapacityUnitConfiguration().getUnits()).isEqualTo(10D);
+    assertThat(resultModel.getCapacityConfiguration().getUnits()).isEqualTo(10D);
     assertThat(resultModel.getIndexStatistics().getTextDocumentStatistics().getIndexedTextDocumentCount()).isEqualTo(1);
     assertThat(resultModel.getIndexStatistics().getTextDocumentStatistics().getIndexedTextBytes()).isEqualTo(1000L);
     assertThat(resultModel.getDocumentAttributeConfigurations().size()).isEqualTo(1);
@@ -194,7 +194,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     ResourceModel resultModel = responseProgress.getResourceModel();
     assertThat(resultModel.getIndexStatistics().getTextDocumentStatistics()).isNull();
     assertThat(resultModel.getDocumentAttributeConfigurations()).isEmpty();
-    assertThat(resultModel.getCapacityUnitConfiguration()).isNull();
+    assertThat(resultModel.getCapacityConfiguration()).isNull();
   }
 
   private static Stream<Arguments> serviceErrorAndExpectedCfnCode() {
@@ -251,7 +251,7 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .search(Status.ENABLED.toString())
                 .type(AttributeType.DATE.toString())
                 .build()))
-            .capacityUnitConfiguration(software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration.builder()
+            .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
                 .units(10)
                 .build())
             .build());

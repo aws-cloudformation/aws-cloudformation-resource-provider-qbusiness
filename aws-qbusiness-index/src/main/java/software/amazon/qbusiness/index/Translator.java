@@ -1,8 +1,6 @@
 package software.amazon.qbusiness.index;
 
-import com.google.common.collect.Lists;
 import software.amazon.awssdk.awscore.AwsRequest;
-import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeleteIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetIndexRequest;
@@ -18,13 +16,11 @@ import software.amazon.awssdk.services.qbusiness.model.UpdateIndexRequest;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class is a centralized placeholder for
@@ -47,7 +43,7 @@ public class Translator {
         .displayName(model.getDisplayName())
         .applicationId(model.getApplicationId())
         .description(model.getDescription())
-        .capacityUnitConfiguration(toServiceCapacityUnitConfiguration(model.getCapacityUnitConfiguration()))
+        .capacityConfiguration(toServiceCapacityConfiguration(model.getCapacityConfiguration()))
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .build();
   }
@@ -97,7 +93,7 @@ public class Translator {
         .documentAttributeConfigurations(fromServiceDocumentAttributeConfigurations(awsResponse.documentAttributeConfigurations()))
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
-        .capacityUnitConfiguration(fromServiceCapacityUnitConfiguration(awsResponse.capacityUnitConfiguration()))
+        .capacityConfiguration(fromServiceCapacityConfiguration(awsResponse.capacityConfiguration()))
         .build();
   }
 
@@ -144,7 +140,7 @@ public class Translator {
         .indexId(model.getIndexId())
         .description(model.getDescription())
         .documentAttributeConfigurations(toServiceDocumentAttributeConfigurations(model.getDocumentAttributeConfigurations()))
-        .capacityUnitConfiguration(toServiceCapacityUnitConfiguration(model.getCapacityUnitConfiguration()))
+        .capacityConfiguration(toServiceCapacityConfiguration(model.getCapacityConfiguration()))
         .build();
   }
 
@@ -262,15 +258,15 @@ public class Translator {
         .build();
   }
 
-  private static StorageCapacityUnitConfiguration fromServiceCapacityUnitConfiguration(
-      final software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration storageCapacityUnitConfiguration) {
+  private static IndexCapacityConfiguration fromServiceCapacityConfiguration(
+      final software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration indexCapacityConfiguration) {
 
-    if (storageCapacityUnitConfiguration == null) {
+    if (indexCapacityConfiguration == null) {
       return null;
     }
 
-    return StorageCapacityUnitConfiguration.builder()
-        .units(Double.valueOf(storageCapacityUnitConfiguration.units()))
+    return IndexCapacityConfiguration.builder()
+        .units(Double.valueOf(indexCapacityConfiguration.units()))
         .build();
   }
 
@@ -330,14 +326,14 @@ public class Translator {
         .build();
   }
 
-  private static software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration toServiceCapacityUnitConfiguration(
-      final StorageCapacityUnitConfiguration storageCapacityUnitConfiguration) {
-    if (storageCapacityUnitConfiguration == null || storageCapacityUnitConfiguration.getUnits() == null) {
+  private static software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration toServiceCapacityConfiguration(
+      final IndexCapacityConfiguration capacityConfiguration) {
+    if (capacityConfiguration == null || capacityConfiguration.getUnits() == null) {
       return null;
     }
 
-    return software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration.builder()
-        .units(storageCapacityUnitConfiguration.getUnits().intValue())
+    return software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
+        .units(capacityConfiguration.getUnits().intValue())
         .build();
   }
 

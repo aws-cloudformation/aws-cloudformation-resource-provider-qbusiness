@@ -15,6 +15,7 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import static software.amazon.qbusiness.index.Constants.API_CREATE_INDEX;
 
@@ -86,8 +87,8 @@ public class CreateHandler extends BaseHandlerStd {
     // handle failed state
 
     RuntimeException causeMessage = null;
-    if (StringUtils.isNotBlank(getIndexResponse.errorMessage())) {
-      causeMessage = new RuntimeException(getIndexResponse.errorMessage());
+    if (Objects.nonNull(getIndexResponse.error()) && StringUtils.isNotBlank(getIndexResponse.error().errorMessage())) {
+      causeMessage = new RuntimeException(getIndexResponse.error().errorMessage());
     }
 
     throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString(), causeMessage);

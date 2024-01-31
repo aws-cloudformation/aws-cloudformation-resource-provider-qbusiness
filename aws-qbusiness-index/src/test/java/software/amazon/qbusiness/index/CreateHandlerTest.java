@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexResponse;
+import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetIndexResponse;
@@ -94,7 +95,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .displayName("TheMeta")
         .description("A Description")
         .applicationId(APP_ID)
-        .capacityUnitConfiguration(new StorageCapacityUnitConfiguration(10D))
+        .capacityConfiguration(new IndexCapacityConfiguration(10D))
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -133,7 +134,7 @@ public class CreateHandlerTest extends AbstractTestBase {
             .status(IndexStatus.ACTIVE)
             .description(createModel.getDescription())
             .displayName(createModel.getDisplayName())
-            .capacityUnitConfiguration(software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration.builder()
+            .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
                 .units(10)
                 .build())
             .build());
@@ -152,7 +153,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(model.getIndexId()).isEqualTo(createModel.getIndexId());
     assertThat(model.getDescription()).isEqualTo(createModel.getDescription());
     assertThat(model.getStatus()).isEqualTo(IndexStatus.ACTIVE.toString());
-    assertThat(model.getCapacityUnitConfiguration().getUnits()).isEqualTo(createModel.getCapacityUnitConfiguration().getUnits());
+    assertThat(model.getCapacityConfiguration().getUnits()).isEqualTo(createModel.getCapacityConfiguration().getUnits());
 
     verify(QBusinessClient).createIndex(any(CreateIndexRequest.class));
     verify(QBusinessClient, times(2)).getIndex(
@@ -171,7 +172,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .description(createModel.getDescription())
         .displayName(createModel.getDisplayName())
-        .capacityUnitConfiguration(software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration.builder()
+        .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
             .units(10)
             .build())
         .build();
@@ -222,9 +223,9 @@ public class CreateHandlerTest extends AbstractTestBase {
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.FAILED)
             .description(createModel.getDescription())
-            .errorMessage("There was a problem in get index.")
+            .error(ErrorDetail.builder().errorMessage("There was a problem in get index.").build())
             .displayName(createModel.getDisplayName())
-            .capacityUnitConfiguration(software.amazon.awssdk.services.qbusiness.model.StorageCapacityUnitConfiguration.builder()
+            .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
                 .units(10)
                 .build())
             .build());

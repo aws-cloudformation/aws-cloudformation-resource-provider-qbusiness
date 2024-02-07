@@ -100,6 +100,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     when(proxyClient.client().getApplication(any(GetApplicationRequest.class)))
         .thenReturn(GetApplicationResponse.builder()
             .applicationId(APP_ID)
+            .applicationArn("this-is-an-arn-there-are-many-like-it-but-this-one-is-mine")
             .roleArn("role1")
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
@@ -138,6 +139,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     ResourceModel resultModel = responseProgress.getResourceModel();
     assertThat(resultModel.getDisplayName()).isEqualTo("Foobar");
     assertThat(resultModel.getApplicationId()).isEqualTo(APP_ID);
+    assertThat(resultModel.getApplicationArn()).isEqualTo("this-is-an-arn-there-are-many-like-it-but-this-one-is-mine");
     assertThat(resultModel.getRoleArn()).isEqualTo("role1");
     assertThat(resultModel.getCreatedAt()).isEqualTo("2023-10-20T18:02:15Z");
     assertThat(resultModel.getUpdatedAt()).isEqualTo("2023-10-20T22:02:15Z");

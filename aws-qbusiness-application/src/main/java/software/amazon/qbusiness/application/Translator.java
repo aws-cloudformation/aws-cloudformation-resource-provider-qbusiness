@@ -77,6 +77,7 @@ public class Translator {
     return ResourceModel.builder()
         .displayName(awsResponse.displayName())
         .applicationId(awsResponse.applicationId())
+        .applicationArn(awsResponse.applicationArn())
         .roleArn(awsResponse.roleArn())
         .status(awsResponse.statusAsString())
         .description(awsResponse.description())

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import software.amazon.qbusiness.datasource.DocumentAttributeCondition;
 import software.amazon.qbusiness.datasource.DocumentAttributeTarget;
 import software.amazon.qbusiness.datasource.DocumentAttributeValue;
@@ -22,7 +23,7 @@ public final class DocumentEnrichmentTranslator {
   ) {
     return Optional.ofNullable(maybeServiceConf)
         .map(serviceConf -> DocumentEnrichmentConfiguration.builder()
-            .inlineConfigurations(fromServiceInlineEnrichmentConfs(maybeServiceConf.inlineConfigurations()))
+            .inlineConfigurations(fromServiceInlineEnrichmentConfs(serviceConf.inlineConfigurations()))
             .preExtractionHookConfiguration(fromServiceHookConfiguration(serviceConf.preExtractionHookConfiguration()))
             .postExtractionHookConfiguration(fromServiceHookConfiguration(serviceConf.postExtractionHookConfiguration()))
             .build())
@@ -67,6 +68,7 @@ public final class DocumentEnrichmentTranslator {
 
     return software.amazon.awssdk.services.qbusiness.model.HookConfiguration.builder()
         .lambdaArn(modelData.getLambdaArn())
+        .roleArn(modelData.getRoleArn())
         .s3BucketName(modelData.getS3BucketName())
         .invocationCondition(toServiceDocumentAttributeCondition(modelData.getInvocationCondition()))
         .build();
@@ -168,14 +170,28 @@ public final class DocumentEnrichmentTranslator {
       return null;
     }
 
+    DocumentAttributeValue.DocumentAttributeValueBuilder builder = DocumentAttributeValue.builder();
+
     Double longAsDouble = Optional.ofNullable(serviceData.longValue()).map(Long::doubleValue).orElse(null);
 
-    return DocumentAttributeValue.builder()
-        .dateValue(Translator.instantToString(serviceData.dateValue()))
-        .longValue(longAsDouble)
-        .stringValue(serviceData.stringValue())
-        .stringListValue(serviceData.stringListValue())
-        .build();
+    if (longAsDouble != null) {
+      builder.longValue(longAsDouble);
+    }
+
+    if (serviceData.dateValue() != null) {
+      builder.dateValue(Translator.instantToString(serviceData.dateValue()));
+    }
+
+    if (StringUtils.isNotBlank(serviceData.stringValue())) {
+      builder.stringValue(serviceData.stringValue());
+    }
+
+    if (serviceData.stringListValue() != null && !serviceData.stringListValue().isEmpty()) {
+      builder.stringListValue(serviceData.stringListValue());
+    }
+
+
+    return builder.build();
   }
 
   static software.amazon.awssdk.services.qbusiness.model.DocumentAttributeValue toServiceTargetDocumentAttributeValue(
@@ -185,14 +201,18 @@ public final class DocumentEnrichmentTranslator {
       return null;
     }
 
-    Long longValue = Optional.ofNullable(modelData.getLongValue()).map(Double::longValue).orElse(null);
-    Instant dateValue = Optional.ofNullable(modelData.getDateValue()).map(Instant::parse).orElse(null);
+    final Long longValue = Optional.ofNullable(modelData.getLongValue()).map(Double::longValue).orElse(null);
+    final Instant dateValue = Optional.ofNullable(modelData.getDateValue()).map(Instant::parse).orElse(null);
+    final String stringValue = modelData.getStringValue();
+    final List<String> stringListValue = modelData.getStringListValue() != null && !modelData.getStringListValue().isEmpty()
+            ? modelData.getStringListValue()
+            : null;
 
     return software.amazon.awssdk.services.qbusiness.model.DocumentAttributeValue.builder()
         .dateValue(dateValue)
         .longValue(longValue)
-        .stringValue(modelData.getStringValue())
-        .stringListValue(modelData.getStringListValue())
+        .stringValue(stringValue)
+        .stringListValue(stringListValue)
         .build();
   }
 }

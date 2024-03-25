@@ -60,7 +60,7 @@ public class CreateHandler extends BaseHandlerStd {
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) ->
                     callCreateWebExperience(awsRequest, clientProxyClient, progress.getResourceModel()))
-                .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
+                .stabilize((awsReq, response, clientProxyClient, model, context) -> isCreateStabilized(clientProxyClient, model, logger))
                 .handleError((createReq, error, client, model, context) ->
                     handleError(createReq, model, error, context, logger, API_CREATE_WEB_EXPERIENCE))
                 .progress()
@@ -78,7 +78,7 @@ public class CreateHandler extends BaseHandlerStd {
               .translateToServiceRequest(Translator::translateToPostCreateUpdateRequest)
               .backoffDelay(backOffStrategy)
               .makeServiceCall(this::callUpdateWebExperience)
-              .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
+              .stabilize((awsReq, response, clientProxyClient, model, context) -> isUpdateStabilized(clientProxyClient, model, logger))
               .handleError((createReq, error, client, model, context) ->
                   handleError(createReq, model, error, context, logger, API_UPDATE_WEB_EXPERIENCE))
               .progress();
@@ -94,7 +94,7 @@ public class CreateHandler extends BaseHandlerStd {
     return new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger);
   }
 
-  private boolean isStabilized(
+  private boolean isCreateStabilized(
       final ProxyClient<QBusinessClient> proxyClient,
       final ResourceModel model,
       final Logger logger) {
@@ -102,14 +102,16 @@ public class CreateHandler extends BaseHandlerStd {
 
     final String status = getWebExperienceResponse.statusAsString();
 
-    if (WebExperienceStatus.ACTIVE.toString().equals(status)) {
-      logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s has stabilized"
+    // CreateWebExperience does not take AuthenticationConfiguration. In this case, the status becomes
+    // PENDING_AUTH_CONFIG. See https://tiny.amazon.com/1geblgev
+    if (WebExperienceStatus.PENDING_AUTH_CONFIG.toString().equals(status)) {
+      logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s has stabilized for create operation"
           .formatted(ResourceModel.TYPE_NAME, model.getApplicationId(), model.getWebExperienceId()));
       return true;
     }
 
     if (!WebExperienceStatus.FAILED.toString().equals(status)) {
-      logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s is still stabilizing."
+      logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s is still stabilizing for create operation."
           .formatted(ResourceModel.TYPE_NAME, model.getApplicationId(), model.getWebExperienceId()));
       return false;
     }
@@ -124,6 +126,38 @@ public class CreateHandler extends BaseHandlerStd {
 
     throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString(), causeMessage);
   }
+
+  private boolean isUpdateStabilized(
+          final ProxyClient<QBusinessClient> proxyClient,
+          final ResourceModel model,
+          final Logger logger) {
+    final GetWebExperienceResponse getWebExperienceResponse = getWebExperience(model, proxyClient, logger);
+
+    final String status = getWebExperienceResponse.statusAsString();
+
+    if (WebExperienceStatus.ACTIVE.toString().equals(status)) {
+      logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s has stabilized for update operation"
+              .formatted(ResourceModel.TYPE_NAME, model.getApplicationId(), model.getWebExperienceId()));
+      return true;
+    }
+
+    if (!WebExperienceStatus.FAILED.toString().equals(status)) {
+      logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s is still stabilizing for update operation."
+              .formatted(ResourceModel.TYPE_NAME, model.getApplicationId(), model.getWebExperienceId()));
+      return false;
+    }
+
+    // handle failed state
+
+    RuntimeException causeMessage = null;
+    ErrorDetail error = getWebExperienceResponse.error();
+    if (Objects.nonNull(error) && StringUtils.isNotBlank(error.errorMessage())) {
+      causeMessage = new RuntimeException(error.errorMessage());
+    }
+
+    throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getPrimaryIdentifier().toString(), causeMessage);
+  }
+
 
   private CreateWebExperienceResponse callCreateWebExperience(
       final CreateWebExperienceRequest request,

@@ -135,11 +135,12 @@ public class CreateHandlerTest extends AbstractTestBase {
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .title("This is a title of the web experience.")
         .subtitle("This is a subtitle of the web experience.")
-        .status(WebExperienceStatus.ACTIVE)
+        .status(WebExperienceStatus.PENDING_AUTH_CONFIG)
         .defaultEndpoint("Endpoint")
         .build();
 
     GetWebExperienceResponse responseWithAuth = baseResponse.toBuilder()
+        .status(WebExperienceStatus.ACTIVE)
         .authenticationConfiguration(software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration.builder()
             .samlConfiguration(software.amazon.awssdk.services.qbusiness.model.SamlConfiguration.builder()
                 .metadataXML("XML")
@@ -215,7 +216,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .title("This is a title of the web experience.")
         .subtitle("This is a subtitle of the web experience.")
-        .status(WebExperienceStatus.ACTIVE)
+        .status(WebExperienceStatus.PENDING_AUTH_CONFIG)
         .defaultEndpoint("Endpoint")
         .build();
     when(qBusinessClient.getWebExperience(any(GetWebExperienceRequest.class)))
@@ -274,6 +275,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     when(qBusinessClient.getWebExperience(any(GetWebExperienceRequest.class)))
         .thenReturn(
             getResponse.toBuilder().status(WebExperienceStatus.CREATING).build(),
+            getResponse.toBuilder().status(WebExperienceStatus.PENDING_AUTH_CONFIG).build(),
             getResponse.toBuilder().status(WebExperienceStatus.ACTIVE).build()
         );
 

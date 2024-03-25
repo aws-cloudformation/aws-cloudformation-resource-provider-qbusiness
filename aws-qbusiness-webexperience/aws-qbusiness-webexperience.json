@@ -183,6 +183,7 @@
       "permissions": [
         "iam:PassRole",
         "qbusiness:CreateWebExperience",
+        "qbusiness:UpdateWebExperience",
         "qbusiness:GetWebExperience",
         "qbusiness:ListTagsForResource",
         "qbusiness:TagResource"

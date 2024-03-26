@@ -225,6 +225,104 @@ public class UpdateHandlerTest extends AbstractTestBase {
   }
 
   @Test
+  public void handleRequest_WithoutAuthContextSuccess() {
+    // call method under test
+    previousModel = ResourceModel.builder()
+            .applicationId(APP_ID)
+            .webExperienceId(WEB_EXPERIENCE_ID)
+            .createdAt("2023-10-20T18:02:15Z")
+            .updatedAt("2023-10-20T22:02:15Z")
+            .title("This is a title of the web experience.")
+            .subtitle("This is a subtitle of the web experience.")
+            .status(WebExperienceStatus.ACTIVE.toString())
+            .defaultEndpoint("Endpoint")
+            .tags(List.of(
+                    Tag.builder().key("remain").value("thesame").build(),
+                    Tag.builder().key("toremove").value("nolongerthere").build(),
+                    Tag.builder().key("iwillchange").value("oldvalue").build()
+            ))
+            .build();
+
+    updateModel = ResourceModel.builder()
+            .applicationId(APP_ID)
+            .webExperienceId(WEB_EXPERIENCE_ID)
+            .title("This is a new title of the web experience.")
+            .subtitle("This is a new subtitle of the web experience.")
+            .tags(List.of(
+                    Tag.builder().key("remain").value("thesame").build(),
+                    Tag.builder().key("iwillchange").value("nowanewvalue").build(),
+                    Tag.builder().key("iamnew").value("overhere").build()
+            ))
+            .build();
+
+    testRequest = ResourceHandlerRequest.<ResourceModel>builder()
+            .awsAccountId("123456")
+            .awsPartition("aws")
+            .region("us-east-1")
+            .stackId("Stack1")
+            .systemTags(Map.of(
+                    "aws::cloudformation::created", "onthisday"
+            ))
+            .previousSystemTags(Map.of(
+                    "aws::cloudformation::created", "onthisday"
+            ))
+            .previousResourceTags(Map.of(
+                    "stacksame", "value",
+                    "stackchange", "whowho",
+                    "stack-i-remove", "hello"
+            ))
+            .desiredResourceTags(Map.of(
+                    "stacksame", "value",
+                    "stackchange", "whatwhenwhere",
+                    "stacknewaddition", "newvalue"
+            ))
+            .previousResourceState(previousModel)
+            .desiredResourceState(updateModel)
+            .build();
+
+    final ProgressEvent<ResourceModel, CallbackContext> resultProgress = underTest.handleRequest(
+            proxy, testRequest, new CallbackContext(), proxyClient, logger
+    );
+
+    // verify
+    assertThat(resultProgress).isNotNull();
+    assertThat(resultProgress.isSuccess()).isTrue();
+    ArgumentCaptor<UpdateWebExperienceRequest> updateAppReqCaptor = ArgumentCaptor.forClass(UpdateWebExperienceRequest.class);
+    verify(sdkClient).updateWebExperience(updateAppReqCaptor.capture());
+    var updateAppRequest = updateAppReqCaptor.getValue();
+    assertThat(updateAppRequest.applicationId()).isEqualTo(APP_ID);
+    assertThat(updateAppRequest.webExperienceId()).isEqualTo(WEB_EXPERIENCE_ID);
+    assertThat(updateAppRequest.title()).isEqualTo("This is a new title of the web experience.");
+    assertThat(updateAppRequest.subtitle()).isEqualTo("This is a new subtitle of the web experience.");
+
+    verify(sdkClient, times(2)).getWebExperience(
+            argThat((ArgumentMatcher<GetWebExperienceRequest>) t -> t.applicationId().equals(APP_ID) && t.webExperienceId().equals(WEB_EXPERIENCE_ID))
+    );
+    verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
+
+    var tagReqCaptor = ArgumentCaptor.forClass(TagResourceRequest.class);
+    var untagReqCaptor = ArgumentCaptor.forClass(UntagResourceRequest.class);
+    verify(sdkClient).tagResource(tagReqCaptor.capture());
+    verify(sdkClient).untagResource(untagReqCaptor.capture());
+
+    var tagResourceRequest = tagReqCaptor.getValue();
+    Map<String, String> tagsInTagResourceReq = tagResourceRequest.tags().stream()
+            .collect(Collectors.toMap(tag -> tag.key(), tag -> tag.value()));
+    assertThat(tagsInTagResourceReq).containsOnly(
+            Map.entry("iwillchange", "nowanewvalue"),
+            Map.entry("iamnew", "overhere"),
+            Map.entry("stackchange", "whatwhenwhere"),
+            Map.entry("stacknewaddition", "newvalue")
+    );
+
+    var untagResourceReq = untagReqCaptor.getValue();
+    assertThat(untagResourceReq.tagKeys()).containsOnlyOnceElementsOf(List.of(
+            "toremove",
+            "stack-i-remove"
+    ));
+  }
+
+  @Test
   public void testThatItDoesntTagAndUnTag() {
     // set up scenario
     previousModel.setTags(List.of(

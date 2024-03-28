@@ -1,11 +1,7 @@
-## My Project
+## AWS CloudFormation Resource Provider Package For AWS QBusiness
 
-TODO: Fill this README out!
+This repository contains CloudFormation resource providers for the `AWS::QBusiness::*` namespace.
 
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
 
 ## Security
 

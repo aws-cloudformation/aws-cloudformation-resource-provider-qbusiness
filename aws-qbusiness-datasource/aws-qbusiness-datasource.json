@@ -418,5 +418,8 @@
       }
     }
   },
+  "tagging": {
+    "taggable": true
+  },
   "additionalProperties": false
 }

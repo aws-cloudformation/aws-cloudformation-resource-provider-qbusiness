@@ -61,10 +61,6 @@
         "Value"
       ],
       "additionalProperties": false
-    },
-    "Unit": {
-      "type": "object",
-      "additionalProperties": false
     }
   },
   "properties": {
@@ -125,8 +121,7 @@
     }
   },
   "required": [
-    "DisplayName",
-    "RoleArn"
+    "DisplayName"
   ],
   "readOnlyProperties": [
     "/properties/ApplicationArn",

@@ -109,6 +109,7 @@
     },
     "Tags": {
       "type": "array",
+      "insertionOrder": false,
       "items": {
         "$ref": "#/definitions/Tag"
       },

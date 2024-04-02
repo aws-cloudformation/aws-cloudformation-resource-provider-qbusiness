@@ -132,6 +132,7 @@
     },
     "DocumentAttributeConfigurations": {
       "type": "array",
+      "insertionOrder": false,
       "items": {
         "$ref": "#/definitions/DocumentAttributeConfiguration"
       },
@@ -158,6 +159,7 @@
     },
     "Tags": {
       "type": "array",
+      "insertionOrder": false,
       "items": {
         "$ref": "#/definitions/Tag"
       },

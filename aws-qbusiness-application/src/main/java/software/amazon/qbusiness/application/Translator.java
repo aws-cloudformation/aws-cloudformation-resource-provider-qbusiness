@@ -43,6 +43,7 @@ public class Translator {
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
+        .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .build();
   }
@@ -85,6 +86,7 @@ public class Translator {
         .updatedAt(instantToString(awsResponse.updatedAt()))
         .encryptionConfiguration(fromServiceEncryptionConfig(awsResponse.encryptionConfiguration()))
         .attachmentsConfiguration(fromServiceAttachmentConfiguration(awsResponse.attachmentsConfiguration()))
+        .personalizationConfiguration(fromServicePersonalizationConfiguration(awsResponse.personalizationConfiguration()))
         .build();
   }
 
@@ -140,6 +142,30 @@ public class Translator {
     return software.amazon.awssdk.services.qbusiness.model.AttachmentsConfiguration.builder()
         .attachmentsControlMode(modelConfig.getAttachmentsControlMode())
         .build();
+  }
+
+  static PersonalizationConfiguration fromServicePersonalizationConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration personalizationConfiguration
+  ) {
+    if (personalizationConfiguration == null) {
+      return null;
+    }
+
+    return PersonalizationConfiguration.builder()
+            .personalizationControlMode(personalizationConfiguration.personalizationControlModeAsString())
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration toServicePersonalizationConfiguration(
+          PersonalizationConfiguration personalizationConfiguration
+  ) {
+    if (personalizationConfiguration == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration.builder()
+            .personalizationControlMode(personalizationConfiguration.getPersonalizationControlMode())
+            .build();
   }
 
   static ResourceModel translateFromReadResponseWithTags(final ListTagsForResourceResponse listTagsResponse, final ResourceModel model) {

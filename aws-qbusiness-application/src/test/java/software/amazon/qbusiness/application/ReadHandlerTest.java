@@ -29,6 +29,8 @@ import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
 import software.amazon.awssdk.services.qbusiness.model.AppliedAttachmentsConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.AttachmentsControlMode;
 import software.amazon.awssdk.services.qbusiness.model.EncryptionConfiguration;
+import software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration;
+import software.amazon.awssdk.services.qbusiness.model.PersonalizationControlMode;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationResponse;
@@ -113,6 +115,9 @@ public class ReadHandlerTest extends AbstractTestBase {
             .attachmentsConfiguration(AppliedAttachmentsConfiguration.builder()
                 .attachmentsControlMode(AttachmentsControlMode.ENABLED)
                 .build())
+            .personalizationConfiguration(PersonalizationConfiguration.builder()
+                .personalizationControlMode(PersonalizationControlMode.ENABLED)
+                .build())
             .build());
     when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
         .thenReturn(ListTagsForResourceResponse.builder()
@@ -147,6 +152,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getStatus()).isEqualTo(ApplicationStatus.ACTIVE.toString());
     assertThat(resultModel.getEncryptionConfiguration().getKmsKeyId()).isEqualTo("keyblade");
     assertThat(resultModel.getAttachmentsConfiguration().getAttachmentsControlMode()).isEqualTo(AttachmentsControlMode.ENABLED.toString());
+    assertThat(resultModel.getPersonalizationConfiguration().getPersonalizationControlMode()).isEqualTo(PersonalizationControlMode.ENABLED.toString());
 
     var tags = resultModel.getTags().stream().map(tag -> Map.entry(tag.getKey(), tag.getValue())).toList();
     assertThat(tags).isEqualTo(List.of(
@@ -187,6 +193,7 @@ public class ReadHandlerTest extends AbstractTestBase {
 
     ResourceModel resultModel = responseProgress.getResourceModel();
     assertThat(resultModel.getEncryptionConfiguration()).isNull();
+    assertThat(resultModel.getPersonalizationConfiguration()).isNull();
   }
 
   private static Stream<Arguments> serviceErrorAndExpectedCfnCode() {

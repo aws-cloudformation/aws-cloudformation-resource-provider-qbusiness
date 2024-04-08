@@ -242,7 +242,7 @@ public class CreateHandlerTest extends AbstractTestBase {
   @Test
   public void testItThrowsUnexpectedErrorWhenCreateCallFails() {
     // set up
-    when(QBusinessClient.createApplication(any(CreateApplicationRequest.class)))
+    when(sdkClient.createApplication(any(CreateApplicationRequest.class)))
         .thenThrow(InternalServerException.builder().build());
 
     // call and verify
@@ -250,6 +250,6 @@ public class CreateHandlerTest extends AbstractTestBase {
         proxy, testRequest, new CallbackContext(), proxyClient, logger
     )).isInstanceOf(InternalServerException.class);
 
-    verify(QBusinessClient).createApplication(any(CreateApplicationRequest.class));
+    verify(sdkClient).createApplication(any(CreateApplicationRequest.class));
   }
 }

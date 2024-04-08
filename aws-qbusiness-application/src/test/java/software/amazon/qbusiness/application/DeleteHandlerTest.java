@@ -197,7 +197,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
   @Test
   public void testItThrowsUnexpectedErrorWhenDeleteCallFails() {
     // set up
-    when(QBusinessClient.deleteApplication(any(DeleteApplicationRequest.class)))
+    when(sdkClient.deleteApplication(any(DeleteApplicationRequest.class)))
         .thenThrow(InternalServerException.builder().build());
 
     // call and verify
@@ -205,6 +205,6 @@ public class DeleteHandlerTest extends AbstractTestBase {
         proxy, testRequest, new CallbackContext(), proxyClient, logger
     )).isInstanceOf(InternalServerException.class);
 
-    verify(QBusinessClient).DeleteApplication(any(DeleteApplicationRequest.class));
+    verify(sdkClient).DeleteApplication(any(DeleteApplicationRequest.class));
   }
 }

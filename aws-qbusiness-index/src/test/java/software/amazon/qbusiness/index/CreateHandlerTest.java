@@ -246,8 +246,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         Arguments.of(ResourceNotFoundException.builder().build(), HandlerErrorCode.NotFound),
         Arguments.of(ServiceQuotaExceededException.builder().build(), HandlerErrorCode.ServiceLimitExceeded),
         Arguments.of(ThrottlingException.builder().build(), HandlerErrorCode.Throttling),
-        Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied),
-        Arguments.of(InternalServerException.builder().build(), HandlerErrorCode.GeneralServiceException)
+        Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied)
     );
   }
 
@@ -269,5 +268,19 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress.getStatus()).isEqualTo(OperationStatus.FAILED);
     verify(QBusinessClient).createIndex(any(CreateIndexRequest.class));
     assertThat(resultProgress.getErrorCode()).isEqualTo(expectedHandlerErrorCode);
+  }
+
+  @Test
+  public void testItThrowsUnexpectedErrorWhenCreateCallFails() {
+    // set up
+    when(QBusinessClient.createIndex(any(CreateIndexRequest.class)))
+        .thenThrow(InternalServerException.builder().build());
+
+    // call and verify
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    )).isInstanceOf(InternalServerException.class);
+
+    verify(QBusinessClient).createIndex(any(CreateIndexRequest.class));
   }
 }

@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.webexperience;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
@@ -207,8 +208,7 @@ public class ReadHandlerTest extends AbstractTestBase {
         Arguments.of(ValidationException.builder().message("nopes").build(), HandlerErrorCode.InvalidRequest),
         Arguments.of(ResourceNotFoundException.builder().message("404").build(), HandlerErrorCode.NotFound),
         Arguments.of(ThrottlingException.builder().message("too much").build(), HandlerErrorCode.Throttling),
-        Arguments.of(AccessDeniedException.builder().message("denied!").build(), HandlerErrorCode.AccessDenied),
-        Arguments.of(InternalServerException.builder().message("something happened").build(), HandlerErrorCode.GeneralServiceException)
+        Arguments.of(AccessDeniedException.builder().message("denied!").build(), HandlerErrorCode.AccessDenied)
     );
   }
 
@@ -270,5 +270,19 @@ public class ReadHandlerTest extends AbstractTestBase {
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
     assertThat(responseProgress.getErrorCode()).isEqualTo(cfnErrorCode);
     assertThat(responseProgress.getResourceModels()).isNull();
+  }
+
+  @Test
+  public void testItThrowsUnexpectedErrorWhenReadCallFails() {
+    // set up
+    when(QBusinessClient.readWebExperience(any(ReadWebExperienceRequest.class)))
+        .thenThrow(InternalServerException.builder().build());
+
+    // call and verify
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    )).isInstanceOf(InternalServerException.class);
+
+    verify(QBusinessClient).readWebExperience(any(ReadWebExperienceRequest.class));
   }
 }

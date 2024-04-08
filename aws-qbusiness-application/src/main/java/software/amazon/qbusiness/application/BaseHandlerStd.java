@@ -101,7 +101,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     } else if (error instanceof ServiceQuotaExceededException) {
       cfnException = new CfnServiceLimitExceededException(error);
     } else {
-      cfnException = new CfnGeneralServiceException(error);
+      throw error;
     }
 
     return ProgressEvent.failed(resourceModel, context, cfnException.getErrorCode(), cfnException.getMessage());

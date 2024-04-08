@@ -100,7 +100,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     } else if (error instanceof AccessDeniedException) {
       cfnException = new CfnAccessDeniedException(apiName, error);
     } else {
-      cfnException = new CfnGeneralServiceException(error);
+      throw error;
     }
 
     return ProgressEvent.failed(resourceModel, context, cfnException.getErrorCode(), cfnException.getMessage());

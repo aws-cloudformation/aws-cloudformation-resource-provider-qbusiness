@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -239,8 +240,7 @@ public class CreateHandlerTest extends AbstractTestBase {
           Arguments.of(ResourceNotFoundException.builder().build(), HandlerErrorCode.NotFound),
           Arguments.of(ServiceQuotaExceededException.builder().build(), HandlerErrorCode.ServiceLimitExceeded),
           Arguments.of(ThrottlingException.builder().build(), HandlerErrorCode.Throttling),
-          Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied),
-          Arguments.of(InternalServerException.builder().build(), HandlerErrorCode.GeneralServiceException)
+          Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied)
       );
   }
 
@@ -264,4 +264,18 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     verify(qBusinessClient).createPlugin(any(CreatePluginRequest.class));
   }
+
+    @Test
+    public void testItThrowsUnexpectedErrorWhenCreateCallFails() {
+        // set up
+        when(QBusinessClient.createPlugin(any(CreatePluginRequest.class)))
+            .thenThrow(InternalServerException.builder().build());
+
+        // call and verify
+        assertThatThrownBy(() -> underTest.handleRequest(
+            proxy, testRequest, new CallbackContext(), proxyClient, logger
+        )).isInstanceOf(InternalServerException.class);
+
+        verify(QBusinessClient).createPlugin(any(CreatePluginRequest.class));
+    }
 }

@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -114,8 +115,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
         Arguments.of(ConflictException.builder().build(), HandlerErrorCode.ResourceConflict),
         Arguments.of(ResourceNotFoundException.builder().build(), HandlerErrorCode.NotFound),
         Arguments.of(ThrottlingException.builder().build(), HandlerErrorCode.Throttling),
-        Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied),
-        Arguments.of(InternalServerException.builder().build(), HandlerErrorCode.GeneralServiceException)
+        Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied)
     );
   }
 
@@ -137,5 +137,19 @@ public class DeleteHandlerTest extends AbstractTestBase {
     verify(sdkClient).deleteRetriever(any(DeleteRetrieverRequest.class));
     assertThat(responseProgress.getErrorCode()).isEqualTo(expectedErrorCode);
     assertThat(responseProgress.getResourceModels()).isNull();
+  }
+
+  @Test
+  public void testItThrowsUnexpectedErrorWhenDeleteCallFails() {
+    // set up
+    when(QBusinessClient.deleteRetriever(any(DeleteRetrieverRequest.class)))
+        .thenThrow(InternalServerException.builder().build());
+
+    // call and verify
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    )).isInstanceOf(InternalServerException.class);
+
+    verify(QBusinessClient).deleteRetriever(any(DeleteRetrieverRequest.class));
   }
 }

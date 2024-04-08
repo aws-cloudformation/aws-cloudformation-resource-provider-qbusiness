@@ -251,7 +251,7 @@ public class ReadHandlerTest extends AbstractTestBase {
   @Test
   public void testItThrowsUnexpectedErrorWhenReadCallFails() {
     // set up
-    when(sdkClient.readApplication(any(ReadApplicationRequest.class)))
+    when(sdkClient.getApplication(any(GetApplicationRequest.class)))
         .thenThrow(InternalServerException.builder().build());
 
     // call and verify
@@ -259,6 +259,6 @@ public class ReadHandlerTest extends AbstractTestBase {
         proxy, testRequest, new CallbackContext(), proxyClient, logger
     )).isInstanceOf(InternalServerException.class);
 
-    verify(sdkClient).ReadApplication(any(ReadApplicationRequest.class));
+    verify(sdkClient).getApplication(any(GetApplicationRequest.class));
   }
 }

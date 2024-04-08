@@ -205,6 +205,6 @@ public class DeleteHandlerTest extends AbstractTestBase {
         proxy, testRequest, new CallbackContext(), proxyClient, logger
     )).isInstanceOf(InternalServerException.class);
 
-    verify(sdkClient).DeleteApplication(any(DeleteApplicationRequest.class));
+    verify(sdkClient).deleteApplication(any(DeleteApplicationRequest.class));
   }
 }

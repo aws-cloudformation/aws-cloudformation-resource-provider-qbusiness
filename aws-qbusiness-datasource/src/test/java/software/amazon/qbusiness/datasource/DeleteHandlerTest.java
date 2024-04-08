@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.datasource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -162,8 +163,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
         Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied),
         Arguments.of(ValidationException.builder().build(), HandlerErrorCode.InvalidRequest),
         Arguments.of(ConflictException.builder().build(), HandlerErrorCode.ResourceConflict),
-        Arguments.of(ThrottlingException.builder().build(), HandlerErrorCode.Throttling),
-        Arguments.of(InternalServerException.builder().build(), HandlerErrorCode.GeneralServiceException)
+        Arguments.of(ThrottlingException.builder().build(), HandlerErrorCode.Throttling)
     );
   }
 

@@ -274,4 +274,18 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress.getErrorCode()).isEqualTo(expectedErrorCode);
     verify(sdkClient).createDataSource(any(CreateDataSourceRequest.class));
   }
+
+  @Test
+  public void testItThrowsUnexpectedErrorWhenCreateCallFails() {
+    // set up
+    when(sdkClient.createDataSource(any(CreateDataSourceRequest.class)))
+        .thenThrow(InternalServerException.builder().build());
+
+    // call and verify
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    )).isInstanceOf(InternalServerException.class);
+
+    verify(sdkClient).createDataSource(any(CreateDataSourceRequest.class));
+  }
 }

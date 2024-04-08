@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.datasource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -208,8 +209,7 @@ public class ReadHandlerTest extends AbstractTestBase {
         Arguments.of(ValidationException.builder().build(), HandlerErrorCode.InvalidRequest),
         Arguments.of(ResourceNotFoundException.builder().build(), HandlerErrorCode.NotFound),
         Arguments.of(ThrottlingException.builder().build(), HandlerErrorCode.Throttling),
-        Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied),
-        Arguments.of(InternalServerException.builder().build(), HandlerErrorCode.GeneralServiceException)
+        Arguments.of(AccessDeniedException.builder().build(), HandlerErrorCode.AccessDenied)
     );
   }
 

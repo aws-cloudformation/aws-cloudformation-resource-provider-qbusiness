@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
-//import software.amazon.awssdk.services.qbusiness.model.ApplicationSummary;
 import software.amazon.awssdk.services.qbusiness.model.Application;
 import software.amazon.awssdk.services.qbusiness.model.ListApplicationsRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListApplicationsResponse;

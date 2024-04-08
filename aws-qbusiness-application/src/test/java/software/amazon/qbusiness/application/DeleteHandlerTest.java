@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -191,5 +192,19 @@ public class DeleteHandlerTest extends AbstractTestBase {
     verify(sdkClient).deleteApplication(any(DeleteApplicationRequest.class));
     assertThat(responseProgress.getErrorCode()).isEqualTo(expectedErrorCode);
     assertThat(responseProgress.getResourceModels()).isNull();
+  }
+
+  @Test
+  public void testItThrowsUnexpectedErrorWhenDeleteCallFails() {
+    // set up
+    when(QBusinessClient.deleteApplication(any(DeleteApplicationRequest.class)))
+        .thenThrow(InternalServerException.builder().build());
+
+    // call and verify
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    )).isInstanceOf(InternalServerException.class);
+
+    verify(QBusinessClient).DeleteApplication(any(DeleteApplicationRequest.class));
   }
 }

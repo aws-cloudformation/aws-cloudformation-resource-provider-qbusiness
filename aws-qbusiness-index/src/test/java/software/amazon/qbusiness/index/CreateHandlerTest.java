@@ -30,10 +30,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
+import software.amazon.awssdk.services.qbusiness.model.AttributeType;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexResponse;
 import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
+import software.amazon.awssdk.services.qbusiness.model.IndexType;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetIndexResponse;
@@ -43,7 +45,10 @@ import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceReques
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.qbusiness.model.ServiceQuotaExceededException;
+import software.amazon.awssdk.services.qbusiness.model.Status;
 import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
+import software.amazon.awssdk.services.qbusiness.model.UpdateIndexRequest;
+import software.amazon.awssdk.services.qbusiness.model.UpdateIndexResponse;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
 import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -96,6 +101,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .description("A Description")
         .applicationId(APP_ID)
         .capacityConfiguration(new IndexCapacityConfiguration(10D))
+        .type(IndexType.HA.toString())
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -132,6 +138,7 @@ public class CreateHandlerTest extends AbstractTestBase {
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.ACTIVE)
+            .type(IndexType.HA)
             .description(createModel.getDescription())
             .displayName(createModel.getDisplayName())
             .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
@@ -152,6 +159,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(model.getApplicationId()).isEqualTo(createModel.getApplicationId());
     assertThat(model.getIndexId()).isEqualTo(createModel.getIndexId());
     assertThat(model.getDescription()).isEqualTo(createModel.getDescription());
+    assertThat(model.getType()).isEqualTo(createModel.getType());
     assertThat(model.getStatus()).isEqualTo(IndexStatus.ACTIVE.toString());
     assertThat(model.getCapacityConfiguration().getUnits()).isEqualTo(createModel.getCapacityConfiguration().getUnits());
 
@@ -168,6 +176,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     var getResponse = GetIndexResponse.builder()
         .applicationId(APP_ID)
         .indexId(INDEX_ID)
+        .type(IndexType.HA)
         .createdAt(Instant.ofEpochMilli(1697824935000L))
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .description(createModel.getDescription())
@@ -219,6 +228,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .thenReturn(GetIndexResponse.builder()
             .applicationId(APP_ID)
             .indexId(INDEX_ID)
+            .type(IndexType.HA)
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.FAILED)

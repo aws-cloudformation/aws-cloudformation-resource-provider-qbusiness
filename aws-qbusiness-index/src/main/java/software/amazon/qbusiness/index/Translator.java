@@ -43,6 +43,7 @@ public class Translator {
         .displayName(model.getDisplayName())
         .applicationId(model.getApplicationId())
         .description(model.getDescription())
+        .type(model.getType())
         .capacityConfiguration(toServiceCapacityConfiguration(model.getCapacityConfiguration()))
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .build();
@@ -90,6 +91,7 @@ public class Translator {
         .indexStatistics(fromServiceIndexStatistics(awsResponse.indexStatistics()))
         .status(awsResponse.statusAsString())
         .description(awsResponse.description())
+        .type(awsResponse.typeAsString())
         .documentAttributeConfigurations(fromServiceDocumentAttributeConfigurations(awsResponse.documentAttributeConfigurations()))
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))

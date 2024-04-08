@@ -75,7 +75,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
       final Exception error,
       final CallbackContext context,
       final Logger logger,
-      final String apiName) throw Exception {
+      final String apiName) throws Exception {
 
     logger.log("[ERROR] Failed Request: %s to API: %s. Error Message: %s".formatted(QBusinessRequest, apiName, error.getMessage()));
     BaseHandlerException cfnException;

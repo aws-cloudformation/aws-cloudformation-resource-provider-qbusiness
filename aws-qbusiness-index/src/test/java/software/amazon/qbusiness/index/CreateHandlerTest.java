@@ -96,6 +96,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .description("A Description")
         .applicationId(APP_ID)
         .capacityConfiguration(new IndexCapacityConfiguration(10D))
+        .type(IndexType.ENTERPRISE.toString())
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -132,6 +133,7 @@ public class CreateHandlerTest extends AbstractTestBase {
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.ACTIVE)
+            .type(IndexType.ENTERPRISE)
             .description(createModel.getDescription())
             .displayName(createModel.getDisplayName())
             .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
@@ -163,11 +165,73 @@ public class CreateHandlerTest extends AbstractTestBase {
   }
 
   @Test
+  public void handleCreateRequestWithDocumentAttributeConfiguration() {
+    // set up scenario
+    when(QBusinessClient.createIndex(any(CreateIndexRequest.class)))
+        .thenReturn(CreateIndexResponse.builder()
+            .indexId(INDEX_ID)
+            .build()
+        );
+    when(QBusinessClient.updateIndex(any(UpdateIndexRequest.class)))
+        .thenReturn(UpdateIndexResponse.builder().build());
+    when(QBusinessClient.listTagsForResource(any(ListTagsForResourceRequest.class))).thenReturn(ListTagsForResourceResponse.builder()
+        .tags(List.of())
+        .build());
+
+    var statusResponseBuilder = GetIndexResponse.builder()
+        .applicationId(APP_ID)
+        .indexId(INDEX_ID)
+        .type(IndexType.ENTERPRISE)
+        .createdAt(Instant.ofEpochMilli(1697824935000L))
+        .updatedAt(Instant.ofEpochMilli(1697839335000L))
+        .status(IndexStatus.ACTIVE);
+
+    when(QBusinessClient.getIndex(any(GetIndexRequest.class)))
+        .thenReturn(statusResponseBuilder.status(IndexStatus.ACTIVE).build())
+        .thenReturn(statusResponseBuilder.status(IndexStatus.UPDATING).build())
+        .thenReturn(statusResponseBuilder.status(IndexStatus.ACTIVE).build())
+        .thenReturn(statusResponseBuilder
+            .status(IndexStatus.ACTIVE)
+            .type(IndexType.ENTERPRISE)
+            .description(createModel.getDescription())
+            .displayName(createModel.getDisplayName())
+            .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
+                .units(10)
+                .build())
+            .build());
+    createModel.setDocumentAttributeConfigurations(List.of(
+        DocumentAttributeConfiguration.builder()
+            .name("that-attrib")
+            .type(AttributeType.STRING.toString())
+            .search(Status.DISABLED.toString())
+            .build()
+    ));
+
+    // call method under test
+    final ProgressEvent<ResourceModel, CallbackContext> resultProgress = underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    );
+    assertThat(resultProgress).isNotNull();
+    assertThat(resultProgress.isSuccess()).isTrue();
+    verify(QBusinessClient).createIndex(any(CreateIndexRequest.class));
+    verify(QBusinessClient, times(4)).getIndex(any(GetIndexRequest.class));
+    verify(QBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
+    verify(QBusinessClient).updateIndex(
+        argThat(
+            (ArgumentMatcher<UpdateIndexRequest>) t -> t.applicationId().equals(APP_ID)
+                && t.indexId().equals(INDEX_ID)
+                && t.hasDocumentAttributeConfigurations()
+        )
+    );
+  }
+
+  @Test
   public void handleRequestFromProcessingStateToActive() {
     // set up scenario
     var getResponse = GetIndexResponse.builder()
         .applicationId(APP_ID)
         .indexId(INDEX_ID)
+        .type(IndexType.ENTERPRISE)
         .createdAt(Instant.ofEpochMilli(1697824935000L))
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .description(createModel.getDescription())
@@ -219,6 +283,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .thenReturn(GetIndexResponse.builder()
             .applicationId(APP_ID)
             .indexId(INDEX_ID)
+            .type(IndexType.ENTERPRISE)
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.FAILED)

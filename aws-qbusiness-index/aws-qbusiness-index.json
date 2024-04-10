@@ -58,6 +58,13 @@
         "UPDATING"
       ]
     },
+    "IndexType": {
+      "type": "string",
+      "enum": [
+        "ENTERPRISE",
+        "STARTER"
+      ]
+    },
     "Status": {
       "type": "string",
       "enum": [

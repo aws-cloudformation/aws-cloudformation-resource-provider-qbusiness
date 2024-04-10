@@ -98,6 +98,7 @@ public class ReadHandlerTest extends AbstractTestBase {
         .thenReturn(GetIndexResponse.builder()
             .applicationId(APP_ID)
             .indexId(INDEX_ID)
+            .type(IndexType.ENTERPRISE)
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .description("This is a description of the index.")
@@ -144,6 +145,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getDisplayName()).isEqualTo("IndexName");
     assertThat(resultModel.getApplicationId()).isEqualTo(APP_ID);
     assertThat(resultModel.getIndexId()).isEqualTo(INDEX_ID);
+    assertThat(resultModel.getType()).isEqualTo(IndexType.ENTERPRISE.toString());
     assertThat(resultModel.getCreatedAt()).isEqualTo("2023-10-20T18:02:15Z");
     assertThat(resultModel.getUpdatedAt()).isEqualTo("2023-10-20T22:02:15Z");
     assertThat(resultModel.getDescription()).isEqualTo("This is a description of the index.");

@@ -125,7 +125,7 @@
       "type": "string",
       "maxLength": 500,
       "minLength": 0,
-      "pattern": "^\\P{C}*$"
+      "pattern": "^[\\s\\S]*$"
     },
     "Tags": {
       "type": "array",
@@ -140,7 +140,7 @@
       "type": "string",
       "maxLength": 500,
       "minLength": 0,
-      "pattern": "^\\P{C}*$"
+      "pattern": "^[\\s\\S]*$"
     },
     "UpdatedAt": {
       "type": "string",

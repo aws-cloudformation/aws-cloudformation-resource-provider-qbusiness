@@ -87,7 +87,7 @@
       "type": "string",
       "maxLength": 1000,
       "minLength": 0,
-      "pattern": "^\\P{C}*$"
+      "pattern": "^[\\s\\S]*$"
     },
     "DisplayName": {
       "type": "string",

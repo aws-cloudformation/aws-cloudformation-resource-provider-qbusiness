@@ -60,8 +60,8 @@
     "IndexType": {
       "type": "string",
       "enum": [
-        "HA",
-        "NON_HA"
+        "ENTERPRISE",
+        "STARTER"
       ]
     },
     "Status": {

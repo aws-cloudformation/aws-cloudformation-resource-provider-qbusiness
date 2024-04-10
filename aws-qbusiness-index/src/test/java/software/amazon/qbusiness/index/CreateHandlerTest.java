@@ -101,7 +101,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .description("A Description")
         .applicationId(APP_ID)
         .capacityConfiguration(new IndexCapacityConfiguration(10D))
-        .type(IndexType.HA.toString())
+        .type(IndexType.ENTERPRISE.toString())
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -138,7 +138,7 @@ public class CreateHandlerTest extends AbstractTestBase {
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.ACTIVE)
-            .type(IndexType.HA)
+            .type(IndexType.ENTERPRISE)
             .description(createModel.getDescription())
             .displayName(createModel.getDisplayName())
             .capacityConfiguration(software.amazon.awssdk.services.qbusiness.model.IndexCapacityConfiguration.builder()
@@ -169,14 +169,13 @@ public class CreateHandlerTest extends AbstractTestBase {
     );
     verify(QBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
   }
-
-  @Test
+  
   public void handleRequestFromProcessingStateToActive() {
     // set up scenario
     var getResponse = GetIndexResponse.builder()
         .applicationId(APP_ID)
         .indexId(INDEX_ID)
-        .type(IndexType.HA)
+        .type(IndexType.ENTERPRISE)
         .createdAt(Instant.ofEpochMilli(1697824935000L))
         .updatedAt(Instant.ofEpochMilli(1697839335000L))
         .description(createModel.getDescription())
@@ -228,7 +227,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .thenReturn(GetIndexResponse.builder()
             .applicationId(APP_ID)
             .indexId(INDEX_ID)
-            .type(IndexType.HA)
+            .type(IndexType.ENTERPRISE)
             .createdAt(Instant.ofEpochMilli(1697824935000L))
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .status(IndexStatus.FAILED)

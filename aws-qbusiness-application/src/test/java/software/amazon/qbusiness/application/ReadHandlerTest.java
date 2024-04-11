@@ -106,6 +106,7 @@ public class ReadHandlerTest extends AbstractTestBase {
             .updatedAt(Instant.ofEpochMilli(1697839335000L))
             .description("this is a description, there are many like it but this one is mine.")
             .displayName("Foobar")
+            .identityCenterApplicationArn("arn:aws:sso::123456789012:application/ssoins/apl")
             .status(ApplicationStatus.ACTIVE)
             .encryptionConfiguration(EncryptionConfiguration.builder()
                 .kmsKeyId("keyblade")
@@ -141,6 +142,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getApplicationId()).isEqualTo(APP_ID);
     assertThat(resultModel.getApplicationArn()).isEqualTo("this-is-an-arn-there-are-many-like-it-but-this-one-is-mine");
     assertThat(resultModel.getRoleArn()).isEqualTo("role1");
+    assertThat(resultModel.getIdentityCenterApplicationArn()).isEqualTo("arn:aws:sso::123456789012:application/ssoins/apl");
     assertThat(resultModel.getCreatedAt()).isEqualTo("2023-10-20T18:02:15Z");
     assertThat(resultModel.getUpdatedAt()).isEqualTo("2023-10-20T22:02:15Z");
     assertThat(resultModel.getDescription()).isEqualTo("this is a description, there are many like it but this one is mine.");

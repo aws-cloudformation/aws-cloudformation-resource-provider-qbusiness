@@ -98,6 +98,18 @@
     "EncryptionConfiguration": {
       "$ref": "#/definitions/EncryptionConfiguration"
     },
+    "IdentityCenterApplicationArn": {
+      "type": "string",
+      "maxLength": 1224,
+      "minLength": 10,
+      "pattern": "^arn:(aws|aws-us-gov|aws-cn|aws-iso|aws-iso-b):sso::\\d{12}:application/(sso)?ins-[a-zA-Z0-9-.]{16}/apl-[a-zA-Z0-9]{16}$"
+    },
+    "IdentityCenterInstanceArn": {
+      "type": "string",
+      "maxLength": 1224,
+      "minLength": 10,
+      "pattern": "^arn:(aws|aws-us-gov|aws-cn|aws-iso|aws-iso-b):sso:::instance/(sso)?ins-[a-zA-Z0-9-.]{16}$"
+    },
     "RoleArn": {
       "type": "string",
       "maxLength": 1284,
@@ -128,8 +140,12 @@
     "/properties/ApplicationArn",
     "/properties/ApplicationId",
     "/properties/CreatedAt",
+    "/properties/IdentityCenterApplicationArn",
     "/properties/Status",
     "/properties/UpdatedAt"
+  ],
+  "writeOnlyProperties": [
+    "/properties/IdentityCenterInstanceArn"
   ],
   "createOnlyProperties": [
     "/properties/EncryptionConfiguration"
@@ -146,7 +162,12 @@
         "qbusiness:CreateApplication",
         "qbusiness:GetApplication",
         "qbusiness:ListTagsForResource",
-        "qbusiness:TagResource"
+        "qbusiness:TagResource",
+        "sso:CreateApplication",
+        "sso:DeleteApplication",
+        "sso:PutApplicationAccessScope",
+        "sso:PutApplicationAuthenticationMethod",
+        "sso:PutApplicationGrant"
       ]
     },
     "read": {
@@ -162,14 +183,20 @@
         "qbusiness:ListTagsForResource",
         "qbusiness:TagResource",
         "qbusiness:UntagResource",
-        "qbusiness:UpdateApplication"
+        "qbusiness:UpdateApplication",
+        "sso:CreateApplication",
+        "sso:DeleteApplication",
+        "sso:PutApplicationAccessScope",
+        "sso:PutApplicationAuthenticationMethod",
+        "sso:PutApplicationGrant"
       ]
     },
     "delete": {
       "permissions": [
         "kms:RetireGrant",
         "qbusiness:DeleteApplication",
-        "qbusiness:GetApplication"
+        "qbusiness:GetApplication",
+        "sso:DeleteApplication"
       ]
     },
     "list": {

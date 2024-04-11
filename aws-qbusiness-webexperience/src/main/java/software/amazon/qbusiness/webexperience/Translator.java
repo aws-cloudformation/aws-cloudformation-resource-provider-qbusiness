@@ -43,18 +43,11 @@ public class Translator {
     return CreateWebExperienceRequest.builder()
         .clientToken(idempotentToken)
         .applicationId(model.getApplicationId())
+        .roleArn(model.getRoleArn())
         .title(model.getTitle())
         .subtitle(model.getSubtitle())
         .welcomeMessage(model.getWelcomeMessage())
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
-        .build();
-  }
-
-  static UpdateWebExperienceRequest translateToPostCreateUpdateRequest(final ResourceModel model) {
-    return UpdateWebExperienceRequest.builder()
-        .applicationId(model.getApplicationId())
-        .webExperienceId(model.getWebExperienceId())
-        .authenticationConfiguration(toServiceAuthenticationConfiguration(model.getAuthenticationConfiguration()))
         .build();
   }
 
@@ -102,7 +95,7 @@ public class Translator {
         .subtitle(awsResponse.subtitle())
         .welcomeMessage(awsResponse.welcomeMessage())
         .samplePromptsControlMode(awsResponse.samplePromptsControlModeAsString())
-        .authenticationConfiguration(fromServiceAuthenticationConfiguration(awsResponse.authenticationConfiguration()))
+        .roleArn(awsResponse.roleArn())
         .defaultEndpoint(awsResponse.defaultEndpoint())
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
@@ -151,7 +144,7 @@ public class Translator {
         .webExperienceId(model.getWebExperienceId())
         .title(model.getTitle())
         .subtitle(model.getSubtitle())
-        .authenticationConfiguration(toServiceAuthenticationConfiguration(model.getAuthenticationConfiguration()))
+        .roleArn(model.getRoleArn())
         .build();
   }
 
@@ -271,53 +264,6 @@ public class Translator {
     return UntagResourceRequest.builder()
         .resourceARN(webExperienceArn)
         .tagKeys(tagsToRemove)
-        .build();
-  }
-
-
-  private static WebExperienceAuthConfiguration fromServiceAuthenticationConfiguration(
-      final software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration webExperienceAuthConfiguration) {
-    if (Objects.isNull(webExperienceAuthConfiguration)) {
-      return null;
-    }
-
-    return WebExperienceAuthConfiguration.builder()
-        .samlConfiguration(fromServiceWebExperienceAuthConfiguration(webExperienceAuthConfiguration.samlConfiguration()))
-        .build();
-  }
-
-  private static SamlConfiguration fromServiceWebExperienceAuthConfiguration(
-      final software.amazon.awssdk.services.qbusiness.model.SamlConfiguration samlConfigurationOptions) {
-    return SamlConfiguration.builder()
-        .metadataXML(samlConfigurationOptions.metadataXML())
-        .roleArn(samlConfigurationOptions.roleArn())
-        .userIdAttribute(samlConfigurationOptions.userIdAttribute())
-        .userGroupAttribute(samlConfigurationOptions.userGroupAttribute())
-        .build();
-  }
-
-  private static software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration
-  toServiceAuthenticationConfiguration(final WebExperienceAuthConfiguration authenticationConfiguration) {
-    if (authenticationConfiguration == null || authenticationConfiguration.getSamlConfiguration() == null) {
-      return null;
-    }
-
-    return software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration.builder()
-        .samlConfiguration(toServiceSamlConfigurationOptions(authenticationConfiguration.getSamlConfiguration()))
-        .build();
-  }
-
-  private static software.amazon.awssdk.services.qbusiness.model.SamlConfiguration
-  toServiceSamlConfigurationOptions(final SamlConfiguration samlConfigurationOptions) {
-    if (samlConfigurationOptions == null) {
-      return null;
-    }
-
-    return software.amazon.awssdk.services.qbusiness.model.SamlConfiguration.builder()
-        .metadataXML(samlConfigurationOptions.getMetadataXML())
-        .roleArn(samlConfigurationOptions.getRoleArn())
-        .userIdAttribute(samlConfigurationOptions.getUserIdAttribute())
-        .userGroupAttribute(samlConfigurationOptions.getUserGroupAttribute())
         .build();
   }
 

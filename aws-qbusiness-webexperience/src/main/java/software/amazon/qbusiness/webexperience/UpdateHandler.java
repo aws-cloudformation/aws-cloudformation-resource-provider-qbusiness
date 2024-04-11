@@ -10,7 +10,6 @@ import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UntagResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.UpdateWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateWebExperienceResponse;
-import software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.WebExperienceStatus;
 import software.amazon.awssdk.utils.StringUtils;
 import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
@@ -136,7 +135,7 @@ public class UpdateHandler extends BaseHandlerStd {
       final ResourceModel model) {
     final GetWebExperienceResponse getWebExperienceResponse = getWebExperience(model, proxyClient, logger);
     final WebExperienceStatus status = getWebExperienceResponse.status();
-    final WebExperienceAuthConfiguration authConfiguration = getWebExperienceResponse.authenticationConfiguration();
+    final String roleArn = getWebExperienceResponse.roleArn();
 
     if (WebExperienceStatus.ACTIVE.equals(status)) {
       logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s has stabilized."
@@ -144,7 +143,7 @@ public class UpdateHandler extends BaseHandlerStd {
       return true;
     }
 
-    if (authConfiguration == null && WebExperienceStatus.PENDING_AUTH_CONFIG.equals(status)) {
+    if (roleArn == null && WebExperienceStatus.PENDING_AUTH_CONFIG.equals(status)) {
       logger.log("[INFO] %s with ApplicationId: %s and WebExperienceId: %s has stabilized."
               .formatted(ResourceModel.TYPE_NAME, model.getApplicationId(), model.getWebExperienceId()));
       return true;

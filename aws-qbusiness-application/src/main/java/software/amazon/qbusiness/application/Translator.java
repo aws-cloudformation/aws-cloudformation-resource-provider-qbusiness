@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.qbusiness.model.Tag;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationRequest;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 /**
@@ -36,10 +37,15 @@ public class Translator {
    * @return awsRequest the aws service request to create a resource
    */
   static CreateApplicationRequest translateToCreateRequest(final String idempotentToken, final ResourceModel model) {
+    // https://w.amazon.com/bin/view/AWS21/Design/Uluru/Onboarding_Guide/ModelingGuidelines#HRequiredWriteOnlyProperties
+    if (model.getIdentityCenterInstanceArn() == null) {
+      throw new CfnInvalidRequestException("IdentityCenterInstanceArn is required.");
+    }
     return CreateApplicationRequest.builder()
         .clientToken(idempotentToken)
         .displayName(model.getDisplayName())
         .roleArn(model.getRoleArn())
+        .identityCenterInstanceArn(model.getIdentityCenterInstanceArn())
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
@@ -79,6 +85,7 @@ public class Translator {
         .applicationId(awsResponse.applicationId())
         .applicationArn(awsResponse.applicationArn())
         .roleArn(awsResponse.roleArn())
+        .identityCenterApplicationArn(awsResponse.identityCenterApplicationArn())
         .status(awsResponse.statusAsString())
         .description(awsResponse.description())
         .createdAt(instantToString(awsResponse.createdAt()))
@@ -176,6 +183,7 @@ public class Translator {
         .displayName(model.getDisplayName())
         .description(model.getDescription())
         .roleArn(model.getRoleArn())
+        .identityCenterInstanceArn(model.getIdentityCenterInstanceArn())
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
         .build();
   }
@@ -203,6 +211,10 @@ public class Translator {
         .stream()
         .map(application -> ResourceModel.builder()
             .applicationId(application.applicationId())
+            .displayName(application.displayName())
+            .createdAt(instantToString(application.createdAt()))
+            .updatedAt(instantToString(application.updatedAt()))
+            .status(application.statusAsString())
             .build()
         )
         .toList();

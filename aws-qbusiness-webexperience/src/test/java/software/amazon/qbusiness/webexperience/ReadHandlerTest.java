@@ -101,14 +101,7 @@ public class ReadHandlerTest extends AbstractTestBase {
             .title("This is a title of the web experience.")
             .subtitle("This is a subtitle of the web experience.")
             .status(WebExperienceStatus.ACTIVE)
-            .authenticationConfiguration(software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration.builder()
-                .samlConfiguration(software.amazon.awssdk.services.qbusiness.model.SamlConfiguration.builder()
-                    .metadataXML("XML")
-                    .roleArn("RoleARN")
-                    .userIdAttribute("UserAttribute")
-                    .userGroupAttribute("UserGroupAttribute")
-                    .build())
-                .build())
+            .roleArn("RoleArn")
             .defaultEndpoint("Endpoint")
             .build());
     when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
@@ -141,11 +134,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getTitle()).isEqualTo("This is a title of the web experience.");
     assertThat(resultModel.getSubtitle()).isEqualTo("This is a subtitle of the web experience.");
     assertThat(resultModel.getStatus()).isEqualTo(WebExperienceStatus.ACTIVE.toString());
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getMetadataXML()).isEqualTo("XML");
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getRoleArn()).isEqualTo("RoleARN");
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getUserIdAttribute()).isEqualTo("UserAttribute");
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getUserGroupAttribute())
-        .isEqualTo("UserGroupAttribute");
+    assertThat(resultModel.getRoleArn()).isEqualTo("RoleArn");
     assertThat(resultModel.getDefaultEndpoint()).isEqualTo("Endpoint");
 
     var tags = resultModel.getTags().stream().map(tag -> Map.entry(tag.getKey(), tag.getValue())).toList();
@@ -163,14 +152,7 @@ public class ReadHandlerTest extends AbstractTestBase {
             .webExperienceId(WEB_EXPERIENCE_ID)
             .title("This is a title of the web experience.")
             .status(WebExperienceStatus.ACTIVE)
-            .authenticationConfiguration(software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration.builder()
-                .samlConfiguration(software.amazon.awssdk.services.qbusiness.model.SamlConfiguration.builder()
-                    .metadataXML("XML")
-                    .roleArn("RoleARN")
-                    .userIdAttribute("UserAttribute")
-                    .userGroupAttribute("UserGroupAttribute")
-                    .build())
-                .build())
+            .roleArn("RoleArn")
             .build());
 
     // call method under test
@@ -195,11 +177,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getTitle()).isEqualTo("This is a title of the web experience.");
     assertThat(resultModel.getApplicationId()).isEqualTo(APP_ID);
     assertThat(resultModel.getWebExperienceId()).isEqualTo(WEB_EXPERIENCE_ID);
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getMetadataXML()).isEqualTo("XML");
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getRoleArn()).isEqualTo("RoleARN");
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getUserIdAttribute()).isEqualTo("UserAttribute");
-    assertThat(resultModel.getAuthenticationConfiguration().getSamlConfiguration().getUserGroupAttribute())
-        .isEqualTo("UserGroupAttribute");
+    assertThat(resultModel.getRoleArn()).isEqualTo("RoleArn");
   }
 
   private static Stream<Arguments> serviceErrorAndExpectedCfnCode() {
@@ -245,14 +223,7 @@ public class ReadHandlerTest extends AbstractTestBase {
             .title("This is a title of the web experience.")
             .subtitle("This is a subtitle of the web experience.")
             .status(WebExperienceStatus.ACTIVE)
-            .authenticationConfiguration(software.amazon.awssdk.services.qbusiness.model.WebExperienceAuthConfiguration.builder()
-                .samlConfiguration(software.amazon.awssdk.services.qbusiness.model.SamlConfiguration.builder()
-                    .metadataXML("XML")
-                    .roleArn("RoleARN")
-                    .userIdAttribute("UserAttribute")
-                    .userGroupAttribute("UserGroupAttribute")
-                    .build())
-                .build())
+            .roleArn("RoleArn")
             .defaultEndpoint("Endpoint")
             .build());
 

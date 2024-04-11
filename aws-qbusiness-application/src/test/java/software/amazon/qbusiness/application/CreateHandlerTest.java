@@ -90,6 +90,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .displayName("TheMeta")
         .description("A Description")
         .roleArn("such role, very arn")
+        .identityCenterInstanceArn("arn:aws:sso:::instance/ssoins")
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()

@@ -1,9 +1,11 @@
 package software.amazon.qbusiness.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -26,11 +28,16 @@ import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.DeletePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeletePluginResponse;
+import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
+import software.amazon.awssdk.services.qbusiness.model.GetPluginRequest;
+import software.amazon.awssdk.services.qbusiness.model.GetPluginResponse;
+import software.amazon.awssdk.services.qbusiness.model.PluginBuildStatus;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -93,10 +100,12 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
         when(proxyClient.client().deletePlugin(any(DeletePluginRequest.class)))
                 .thenReturn(DeletePluginResponse.builder().build());
+        when(proxyClient.client().getPlugin(any(GetPluginRequest.class))).thenThrow(ResourceNotFoundException.builder().build());
 
         final ProgressEvent<ResourceModel, CallbackContext> response = underTest.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
         verify(qBusinessClient).deletePlugin(any(DeletePluginRequest.class));
+        verify(qBusinessClient).getPlugin(any(GetPluginRequest.class));
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -112,6 +121,44 @@ public class DeleteHandlerTest extends AbstractTestBase {
         verify(qBusinessClient).deletePlugin(
         argThat((ArgumentMatcher<DeletePluginRequest>) t -> t.pluginId().equals(PLUGIN_ID)));
 
+    }
+
+    @Test
+    public void handleRequest_StabilizeFromDeleteInProgressToDeleted() {
+
+        when(proxyClient.client().deletePlugin(any(DeletePluginRequest.class)))
+                .thenReturn(DeletePluginResponse.builder().build());
+        when(proxyClient.client().getPlugin(any(GetPluginRequest.class)))
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .buildStatus(PluginBuildStatus.DELETE_IN_PROGRESS)
+                        .build())
+                .thenThrow(ResourceNotFoundException.builder().build());
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = underTest.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        verify(qBusinessClient).deletePlugin(any(DeletePluginRequest.class));
+        verify(qBusinessClient, times(2)).getPlugin(any(GetPluginRequest.class));
+    }
+
+    @Test
+    public void handleRequest_ThrowsExpectedErrorWhenStabilizationFails() {
+
+        when(proxyClient.client().deletePlugin(any(DeletePluginRequest.class)))
+                .thenReturn(DeletePluginResponse.builder().build());
+        when(proxyClient.client().getPlugin(any(GetPluginRequest.class)))
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .buildStatus(PluginBuildStatus.DELETE_FAILED)
+                        .build());
+
+        assertThatThrownBy(() -> underTest.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnNotStabilizedException.class);;
+
+        verify(qBusinessClient).deletePlugin(any(DeletePluginRequest.class));
+        verify(qBusinessClient, times(1)).getPlugin(any(GetPluginRequest.class));
     }
 
     private static Stream<Arguments> serviceErrorAndHandlerCodes() {

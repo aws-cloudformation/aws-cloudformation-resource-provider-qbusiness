@@ -157,6 +157,7 @@
     }
   },
   "required": [
+    "ApplicationId",
     "Configuration",
     "DisplayName",
     "Type"

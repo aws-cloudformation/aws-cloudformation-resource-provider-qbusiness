@@ -346,6 +346,8 @@
     }
   },
   "required": [
+    "ApplicationId",
+    "IndexId",
     "Configuration",
     "DisplayName"
   ],

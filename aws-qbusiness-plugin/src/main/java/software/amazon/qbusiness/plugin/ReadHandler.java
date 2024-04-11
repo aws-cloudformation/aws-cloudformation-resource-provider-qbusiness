@@ -49,9 +49,4 @@ public class ReadHandler extends BaseHandlerStd {
                   )
           );
     }
-
-    protected GetPluginResponse callGetPlugin(GetPluginRequest request, ProxyClient<QBusinessClient> client) {
-      return client.injectCredentialsAndInvokeV2(request, client.client()::getPlugin);
-    }
-
 }

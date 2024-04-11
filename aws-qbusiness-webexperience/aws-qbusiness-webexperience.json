@@ -1,41 +1,7 @@
 {
   "typeName": "AWS::QBusiness::WebExperience",
   "description": "Definition of AWS::QBusiness::WebExperience Resource Type",
-  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-qbusiness",
   "definitions": {
-    "SamlConfiguration": {
-      "type": "object",
-      "properties": {
-        "MetadataXML": {
-          "type": "string",
-          "maxLength": 10000000,
-          "minLength": 1000,
-          "pattern": "^.*$"
-        },
-        "RoleArn": {
-          "type": "string",
-          "maxLength": 1284,
-          "minLength": 0,
-          "pattern": "^arn:[a-z0-9-\\.]{1,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[^/].{0,1023}$"
-        },
-        "UserIdAttribute": {
-          "type": "string",
-          "maxLength": 256,
-          "minLength": 1
-        },
-        "UserGroupAttribute": {
-          "type": "string",
-          "maxLength": 256,
-          "minLength": 1
-        }
-      },
-      "required": [
-        "MetadataXML",
-        "RoleArn",
-        "UserIdAttribute"
-      ],
-      "additionalProperties": false
-    },
     "Tag": {
       "type": "object",
       "properties": {
@@ -55,23 +21,6 @@
         "Value"
       ],
       "additionalProperties": false
-    },
-    "WebExperienceAuthConfiguration": {
-      "oneOf": [
-        {
-          "type": "object",
-          "title": "SamlConfiguration",
-          "properties": {
-            "SamlConfiguration": {
-              "$ref": "#/definitions/SamlConfiguration"
-            }
-          },
-          "required": [
-            "SamlConfiguration"
-          ],
-          "additionalProperties": false
-        }
-      ]
     },
     "WebExperienceSamplePromptsControlMode": {
       "type": "string",
@@ -98,9 +47,6 @@
       "minLength": 36,
       "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{35}$"
     },
-    "AuthenticationConfiguration": {
-      "$ref": "#/definitions/WebExperienceAuthConfiguration"
-    },
     "CreatedAt": {
       "type": "string",
       "format": "date-time"
@@ -110,6 +56,12 @@
       "maxLength": 2048,
       "minLength": 1,
       "pattern": "^(https?|ftp|file)://([^\\s]*)$"
+    },
+    "RoleArn": {
+      "type": "string",
+      "maxLength": 1284,
+      "minLength": 0,
+      "pattern": "^arn:[a-z0-9-\\.]{1,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[^/].{0,1023}$"
     },
     "SamplePromptsControlMode": {
       "$ref": "#/definitions/WebExperienceSamplePromptsControlMode"
@@ -160,6 +112,9 @@
       "minLength": 0
     }
   },
+  "required": [
+    "ApplicationId"
+  ],
   "readOnlyProperties": [
     "/properties/CreatedAt",
     "/properties/DefaultEndpoint",
@@ -180,10 +135,11 @@
       "permissions": [
         "iam:PassRole",
         "qbusiness:CreateWebExperience",
-        "qbusiness:UpdateWebExperience",
         "qbusiness:GetWebExperience",
         "qbusiness:ListTagsForResource",
-        "qbusiness:TagResource"
+        "qbusiness:TagResource",
+        "sso:PutApplicationGrant",
+        "sso:UpdateApplication"
       ]
     },
     "read": {
@@ -199,7 +155,9 @@
         "qbusiness:ListTagsForResource",
         "qbusiness:TagResource",
         "qbusiness:UntagResource",
-        "qbusiness:UpdateWebExperience"
+        "qbusiness:UpdateWebExperience",
+        "sso:PutApplicationGrant",
+        "sso:UpdateApplication"
       ]
     },
     "delete": {
@@ -227,5 +185,6 @@
   "tagging": {
     "taggable": true
   },
+  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-qbusiness",
   "additionalProperties": false
 }

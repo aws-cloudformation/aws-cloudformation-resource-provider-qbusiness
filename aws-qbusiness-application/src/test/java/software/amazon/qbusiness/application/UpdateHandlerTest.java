@@ -92,6 +92,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
             .attachmentsControlMode(AttachmentsControlMode.DISABLED.toString())
             .build()
         )
+        .identityCenterInstanceArn("arn:aws:sso:::instance/before")
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
             Tag.builder().key("toremove").value("nolongerthere").build(),
@@ -108,6 +109,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
             .attachmentsControlMode(AttachmentsControlMode.ENABLED.toString())
             .build()
         )
+        .identityCenterInstanceArn("arn:aws:sso:::instance/after")
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
             Tag.builder().key("iwillchange").value("nowanewvalue").build(),
@@ -179,6 +181,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(updateAppRequest.displayName()).isEqualTo("New Phone Who dis");
     assertThat(updateAppRequest.description()).isEqualTo("It's a new description");
     assertThat(updateAppRequest.roleArn()).isEqualTo("now-better-role");
+    assertThat(updateAppRequest.identityCenterInstanceArn()).isEqualTo("arn:aws:sso:::instance/after");
     assertThat(updateAppRequest.attachmentsConfiguration()).isEqualTo(software.amazon.awssdk.services.qbusiness.model.AttachmentsConfiguration.builder()
         .attachmentsControlMode(AttachmentsControlMode.ENABLED)
         .build());

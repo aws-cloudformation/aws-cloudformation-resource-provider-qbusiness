@@ -4,6 +4,10 @@ import org.json.JSONObject;
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
+import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
+import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
+import software.amazon.awssdk.services.qbusiness.model.GetPluginRequest;
+import software.amazon.awssdk.services.qbusiness.model.GetPluginResponse;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
@@ -89,5 +93,17 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     return ProgressEvent.failed(resourceModel, context, cfnException.getErrorCode(), cfnException.getMessage());
   }
 
+  protected GetPluginResponse getPlugin(ResourceModel model, ProxyClient<QBusinessClient> proxyClient) {
+    var request = GetPluginRequest.builder()
+            .applicationId(model.getApplicationId())
+            .pluginId(model.getPluginId())
+            .build();
+    return callGetPlugin(request, proxyClient);
+  }
+
+  protected GetPluginResponse callGetPlugin(GetPluginRequest request, ProxyClient<QBusinessClient> proxyClient) {
+    var client = proxyClient.client();
+    return proxyClient.injectCredentialsAndInvokeV2(request, client::getPlugin);
+  }
 
 }

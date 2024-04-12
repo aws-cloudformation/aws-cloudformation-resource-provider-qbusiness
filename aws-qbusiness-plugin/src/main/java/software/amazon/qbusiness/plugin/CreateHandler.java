@@ -1,10 +1,19 @@
 package software.amazon.qbusiness.plugin;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
+import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginResponse;
+import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
+import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
+import software.amazon.awssdk.services.qbusiness.model.GetApplicationResponse;
+import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
+import software.amazon.awssdk.services.qbusiness.model.GetPluginResponse;
+import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
+import software.amazon.awssdk.services.qbusiness.model.PluginBuildStatus;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginResponse;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -13,6 +22,7 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
 
 import java.time.Duration;
+import java.util.Objects;
 
 import static software.amazon.qbusiness.plugin.Constants.API_CREATE_PLUGIN;
 import static software.amazon.qbusiness.plugin.Constants.API_UPDATE_PLUGIN;
@@ -54,6 +64,7 @@ public class CreateHandler extends BaseHandlerStd {
                 .translateToServiceRequest(model -> Translator.translateToCreateRequest(model, request.getClientRequestToken()))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreatePlugin(awsRequest, clientProxyClient, progress.getResourceModel()))
+                .stabilize((createReq, createResponse, client, model, context) -> isStabilized(request, client, model, logger))
                 .handleError((createPluginRequest, error, client, model, context) ->
                     handleError(createPluginRequest, model, error, context, logger, API_CREATE_PLUGIN))
                 .progress()
@@ -90,5 +101,40 @@ public class CreateHandler extends BaseHandlerStd {
       ProxyClient<QBusinessClient> client
   ) {
     return client.injectCredentialsAndInvokeV2(request, client.client()::updatePlugin);
+  }
+
+  private boolean isStabilized(
+      final ResourceHandlerRequest<ResourceModel> request,
+      ProxyClient<QBusinessClient> proxyClient,
+      ResourceModel model,
+      Logger logger
+  ) {
+    logger.log("[INFO] Checking for Create Complete for Plugin process in stack: %s with ID: %s, For Account: %s, Application: %s"
+            .formatted(request.getStackId(), model.getPluginId(), request.getAwsAccountId(), model.getApplicationId())
+    );
+
+    GetPluginResponse getPluginRes = getPlugin(model, proxyClient);
+    var status = getPluginRes.buildStatus();
+
+    if (PluginBuildStatus.READY.equals(status)) {
+      logger.log("[INFO] %s with ID: %s, for App: %s, stack ID: %s has stabilized".formatted(
+              ResourceModel.TYPE_NAME, model.getPluginId(), model.getApplicationId(), request.getStackId()
+      ));
+
+      return true;
+    }
+
+    if (PluginBuildStatus.CREATE_IN_PROGRESS.equals(status)) {
+      logger.log("[INFO] %s with ID: %s, for App: %s, stack ID: %s is still stabilizing".formatted(
+              ResourceModel.TYPE_NAME, model.getPluginId(), model.getApplicationId(), request.getStackId()
+      ));
+      return false;
+    }
+
+    logger.log("[INFO] %s with ID: %s, for App: %s, stack ID: %s has failed to stabilize".formatted(
+            ResourceModel.TYPE_NAME, model.getPluginId(), model.getApplicationId(), request.getStackId()
+    ));
+
+    throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getPluginId(), null);
   }
 }

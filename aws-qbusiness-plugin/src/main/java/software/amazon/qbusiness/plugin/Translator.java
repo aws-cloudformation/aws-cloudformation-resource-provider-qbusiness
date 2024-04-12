@@ -41,6 +41,7 @@ public class Translator {
         .type(model.getType())
         .serverUrl(model.getServerUrl())
         .authConfiguration(AuthConfigHelper.convertToServiceAuthConfig(model.getAuthConfiguration()))
+        .customPluginConfiguration(CustomPluginConfigHelper.convertToServiceCustomPluginConfig(model.getCustomPluginConfiguration()))
         .clientToken(idempotenceToken)
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .build();
@@ -83,6 +84,8 @@ public class Translator {
         .serverUrl(awsResponse.serverUrl())
         .authConfiguration(AuthConfigHelper.convertFromServiceAuthConfig(awsResponse.authConfiguration()))
         .state(awsResponse.stateAsString())
+        .buildStatus(awsResponse.buildStatusAsString())
+        .customPluginConfiguration(CustomPluginConfigHelper.convertFromServiceCustomPluginConfig(awsResponse.customPluginConfiguration()))
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
         .build();
@@ -114,6 +117,7 @@ public class Translator {
         .displayName(model.getDisplayName())
         .serverUrl(model.getServerUrl())
         .authConfiguration(AuthConfigHelper.convertToServiceAuthConfig(model.getAuthConfiguration()))
+        .customPluginConfiguration(CustomPluginConfigHelper.convertToServiceCustomPluginConfig(model.getCustomPluginConfiguration()))
         .state(model.getState())
         .build();
   }
@@ -147,6 +151,7 @@ public class Translator {
             .type(plugin.type().toString())
             .serverUrl(plugin.serverUrl())
             .state(plugin.stateAsString())
+            .buildStatus(plugin.buildStatusAsString())
             .createdAt(instantToString(plugin.createdAt()))
             .updatedAt(instantToString(plugin.updatedAt()))
             .build())

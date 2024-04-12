@@ -2,22 +2,32 @@ package software.amazon.qbusiness.plugin;
 
 import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 
+import java.util.Collections;
+import java.util.Map;
+
 public class AuthConfigHelper {
 
   public static PluginAuthConfiguration convertFromServiceAuthConfig(
       software.amazon.awssdk.services.qbusiness.model.PluginAuthConfiguration serviceAuthConfig
   ) {
+
+    final PluginAuthConfiguration.PluginAuthConfigurationBuilder builder = PluginAuthConfiguration.builder();
+
     if (serviceAuthConfig.oAuth2ClientCredentialConfiguration() != null) {
-      return software.amazon.qbusiness.plugin.PluginAuthConfiguration.builder()
-          .oAuth2ClientCredentialConfiguration(
-              convertFromServiceOAuth(serviceAuthConfig.oAuth2ClientCredentialConfiguration()))
-          .build();
+      builder.oAuth2ClientCredentialConfiguration(
+              convertFromServiceOAuth(serviceAuthConfig.oAuth2ClientCredentialConfiguration()));
     }
 
-    return software.amazon.qbusiness.plugin.PluginAuthConfiguration.builder()
-        .basicAuthConfiguration(
-            convertFromServiceBasicAuth(serviceAuthConfig.basicAuthConfiguration()))
-        .build();
+    if (serviceAuthConfig.basicAuthConfiguration() != null) {
+      builder.basicAuthConfiguration(
+              convertFromServiceBasicAuth(serviceAuthConfig.basicAuthConfiguration()));
+    }
+
+    if (serviceAuthConfig.noAuthConfiguration() != null) {
+      builder.noAuthConfiguration(convertFromServiceNoAuth(serviceAuthConfig.noAuthConfiguration()));
+    }
+
+    return builder.build();
   }
 
   public static software.amazon.awssdk.services.qbusiness.model.PluginAuthConfiguration convertToServiceAuthConfig(
@@ -37,6 +47,12 @@ public class AuthConfigHelper {
       return software.amazon.awssdk.services.qbusiness.model.PluginAuthConfiguration.builder()
           .basicAuthConfiguration(convertToServiceBasicAuth(cfnAuthConfig.getBasicAuthConfiguration()))
           .build();
+    }
+
+    if (cfnAuthConfig.getNoAuthConfiguration() != null) {
+      return software.amazon.awssdk.services.qbusiness.model.PluginAuthConfiguration.builder()
+              .noAuthConfiguration(convertToServiceNoAuth(cfnAuthConfig.getNoAuthConfiguration()))
+              .build();
     }
     throw new CfnGeneralServiceException("Unknown auth configuration");
   }
@@ -59,6 +75,12 @@ public class AuthConfigHelper {
         .build();
   }
 
+  private static Map<String, Object> convertFromServiceNoAuth(
+          software.amazon.awssdk.services.qbusiness.model.NoAuthConfiguration serviceNoAuth
+  ) {
+    return Collections.emptyMap();
+  }
+
   private static software.amazon.awssdk.services.qbusiness.model.BasicAuthConfiguration convertToServiceBasicAuth(
       BasicAuthConfiguration cfnBasicAuth
   ) {
@@ -75,6 +97,13 @@ public class AuthConfigHelper {
         .roleArn(cfnOath.getRoleArn())
         .secretArn(cfnOath.getSecretArn())
         .build();
+  }
+
+  private static software.amazon.awssdk.services.qbusiness.model.NoAuthConfiguration convertToServiceNoAuth(
+      Map<String, Object> cfnNoAuth
+  ) {
+    return software.amazon.awssdk.services.qbusiness.model.NoAuthConfiguration.builder()
+            .build();
   }
 
 }

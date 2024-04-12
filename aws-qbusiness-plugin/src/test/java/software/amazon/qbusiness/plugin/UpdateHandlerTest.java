@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -36,6 +37,7 @@ import software.amazon.awssdk.services.qbusiness.model.GetPluginResponse;
 import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
+import software.amazon.awssdk.services.qbusiness.model.PluginBuildStatus;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.qbusiness.model.ServiceQuotaExceededException;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
@@ -46,6 +48,7 @@ import software.amazon.awssdk.services.qbusiness.model.UntagResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginResponse;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -136,6 +139,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
                     .displayName(PLUGIN_NAME)
                     .type(PLUGIN_TYPE)
                     .state(PLUGIN_STATE)
+                    .buildStatus(PluginBuildStatus.READY.toString())
                     .serverUrl(SERVER_URL)
                     .authConfiguration(serviceAuthConfiguration)
                     .tags(List.of(
@@ -151,6 +155,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
                     .displayName(UPDATED_PLUGIN_NAME)
                     .type(PLUGIN_TYPE)
                     .state(UPDATED_PLUGIN_STATE)
+                    .buildStatus(PluginBuildStatus.READY.toString())
                     .serverUrl(UPDATED_SERVER_URL)
                     .authConfiguration(updatedServiceAuthConfiguration)
                     .tags(List.of(
@@ -188,16 +193,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
         when(proxyClient.client().updatePlugin(any(UpdatePluginRequest.class)))
           .thenReturn(UpdatePluginResponse.builder()
               .build());
-        when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
-        .thenReturn(GetPluginResponse.builder()
-                  .applicationId(APPLICATION_ID)
-                  .pluginId(PLUGIN_ID)
-                  .displayName(UPDATED_PLUGIN_NAME)
-                  .type(PLUGIN_TYPE)
-                  .state(UPDATED_PLUGIN_STATE)
-                  .serverUrl(UPDATED_SERVER_URL)
-                  .authConfiguration(updatedCfnAuthConfiguration)
-            .build());
 
          when(qBusinessClient.listTagsForResource(any(ListTagsForResourceRequest.class)))
           .thenReturn(ListTagsForResourceResponse.builder().tags(List.of()).build());
@@ -212,7 +207,17 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_SimpleSuccess() {
-
+      when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
+        .thenReturn(GetPluginResponse.builder()
+                  .applicationId(APPLICATION_ID)
+                  .pluginId(PLUGIN_ID)
+                  .displayName(UPDATED_PLUGIN_NAME)
+                  .type(PLUGIN_TYPE)
+                  .state(UPDATED_PLUGIN_STATE)
+                  .buildStatus(PluginBuildStatus.READY)
+                  .serverUrl(UPDATED_SERVER_URL)
+                  .authConfiguration(updatedCfnAuthConfiguration)
+            .build());
       when(qBusinessClient.tagResource(any(TagResourceRequest.class)))
           .thenReturn(TagResourceResponse.builder().build());
       when(qBusinessClient.untagResource(any(UntagResourceRequest.class)))
@@ -237,7 +242,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
       assertThat(resultProgress.getResourceModel().getState()).isEqualTo(UPDATED_PLUGIN_STATE);
       assertThat(resultProgress.getResourceModel().getServerUrl()).isEqualTo(UPDATED_SERVER_URL);
 
-      verify(qBusinessClient).getPlugin(
+      verify(qBusinessClient, times(2)).getPlugin(
           argThat((ArgumentMatcher<GetPluginRequest>) t ->
               t.applicationId().equals(APPLICATION_ID) && t.pluginId().equals(PLUGIN_ID)
           )
@@ -266,6 +271,109 @@ public class UpdateHandlerTest extends AbstractTestBase {
       ));
     }
 
+    @Test
+    public void handleRequest_StabilizeFromUpdateInProgressToReady() {
+        when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .displayName(UPDATED_PLUGIN_NAME)
+                        .type(PLUGIN_TYPE)
+                        .state(UPDATED_PLUGIN_STATE)
+                        .buildStatus(PluginBuildStatus.UPDATE_IN_PROGRESS)
+                        .serverUrl(UPDATED_SERVER_URL)
+                        .authConfiguration(updatedCfnAuthConfiguration)
+                        .build())
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .displayName(UPDATED_PLUGIN_NAME)
+                        .type(PLUGIN_TYPE)
+                        .state(UPDATED_PLUGIN_STATE)
+                        .buildStatus(PluginBuildStatus.READY)
+                        .serverUrl(UPDATED_SERVER_URL)
+                        .authConfiguration(updatedCfnAuthConfiguration)
+                        .build());
+
+        when(qBusinessClient.tagResource(any(TagResourceRequest.class)))
+                .thenReturn(TagResourceResponse.builder().build());
+        when(qBusinessClient.untagResource(any(UntagResourceRequest.class)))
+                .thenReturn(UntagResourceResponse.builder().build());
+        final ProgressEvent<ResourceModel, CallbackContext> resultProgress = underTest.handleRequest(
+                proxy, request, new CallbackContext(), proxyClient, logger
+        );
+
+        assertThat(resultProgress).isNotNull();
+        assertThat(resultProgress.isSuccess()).isTrue();
+        ArgumentCaptor<UpdatePluginRequest> updatePluginReqCaptor = ArgumentCaptor.forClass(UpdatePluginRequest.class);
+        verify(qBusinessClient).updatePlugin(updatePluginReqCaptor.capture());
+        assertThat(resultProgress.getResourceModel().getApplicationId()).isEqualTo(APPLICATION_ID);
+        assertThat(resultProgress.getResourceModel().getPluginId()).isEqualTo(PLUGIN_ID);
+        assertThat(resultProgress.getResourceModel().getAuthConfiguration().getBasicAuthConfiguration().getRoleArn())
+                .isEqualTo(AuthConfigHelper.convertToServiceAuthConfig(updatedModel.getAuthConfiguration())
+                        .basicAuthConfiguration().roleArn());
+        assertThat(resultProgress.getResourceModel().getAuthConfiguration().getBasicAuthConfiguration().getSecretArn())
+                .isEqualTo(AuthConfigHelper.convertToServiceAuthConfig(updatedModel.getAuthConfiguration())
+                        .basicAuthConfiguration().secretArn());
+        assertThat(resultProgress.getResourceModel().getDisplayName()).isEqualTo(UPDATED_PLUGIN_NAME);
+        assertThat(resultProgress.getResourceModel().getState()).isEqualTo(UPDATED_PLUGIN_STATE);
+        assertThat(resultProgress.getResourceModel().getServerUrl()).isEqualTo(UPDATED_SERVER_URL);
+
+        verify(qBusinessClient, times(3)).getPlugin(
+                argThat((ArgumentMatcher<GetPluginRequest>) t ->
+                        t.applicationId().equals(APPLICATION_ID) && t.pluginId().equals(PLUGIN_ID)
+                )
+        );
+        verify(qBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
+
+        var tagReqCaptor = ArgumentCaptor.forClass(TagResourceRequest.class);
+        var untagReqCaptor = ArgumentCaptor.forClass(UntagResourceRequest.class);
+        verify(qBusinessClient).tagResource(tagReqCaptor.capture());
+        verify(qBusinessClient).untagResource(untagReqCaptor.capture());
+
+        var tagResourceRequest = tagReqCaptor.getValue();
+        Map<String, String> tagsInTagResourceReq = tagResourceRequest.tags().stream()
+                .collect(Collectors.toMap(tag -> tag.key(), tag -> tag.value()));
+        assertThat(tagsInTagResourceReq).containsOnly(
+                Map.entry("iwillchange", "nowanewvalue"),
+                Map.entry("iamnew", "overhere"),
+                Map.entry("stackchange", "whatwhenwhere"),
+                Map.entry("stacknewaddition", "newvalue")
+        );
+
+        var untagResourceReq = untagReqCaptor.getValue();
+        assertThat(untagResourceReq.tagKeys()).containsOnlyOnceElementsOf(List.of(
+                "toremove",
+                "stack-i-remove"
+        ));
+    }
+
+    @Test
+    public void handleRequest_ThrowsExpectedErrorWhenStabilizationFails() {
+        when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .displayName(UPDATED_PLUGIN_NAME)
+                        .type(PLUGIN_TYPE)
+                        .state(UPDATED_PLUGIN_STATE)
+                        .buildStatus(PluginBuildStatus.UPDATE_FAILED)
+                        .serverUrl(UPDATED_SERVER_URL)
+                        .authConfiguration(updatedCfnAuthConfiguration)
+                        .build());
+
+        assertThatThrownBy(() -> underTest.handleRequest(
+                proxy, request, new CallbackContext(), proxyClient, logger
+        )).isInstanceOf(CfnNotStabilizedException.class);
+
+        verify(qBusinessClient).updatePlugin(any(UpdatePluginRequest.class));
+        verify(qBusinessClient, times(1)).getPlugin(
+                argThat((ArgumentMatcher<GetPluginRequest>) t ->
+                        t.applicationId().equals(APPLICATION_ID) && t.pluginId().equals(PLUGIN_ID)
+                )
+        );
+    }
+
     private static Stream<Arguments> serviceErrorAndHandlerCodes() {
     return Stream.of(
             Arguments.of(ValidationException.builder().build(), HandlerErrorCode.InvalidRequest),
@@ -280,6 +388,17 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
   @Test
   public void testThatItDoesntTagAndUnTag() {
+    when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
+        .thenReturn(GetPluginResponse.builder()
+                  .applicationId(APPLICATION_ID)
+                  .pluginId(PLUGIN_ID)
+                  .displayName(UPDATED_PLUGIN_NAME)
+                  .type(PLUGIN_TYPE)
+                  .state(UPDATED_PLUGIN_STATE)
+                  .buildStatus(PluginBuildStatus.READY)
+                  .serverUrl(UPDATED_SERVER_URL)
+                  .authConfiguration(updatedCfnAuthConfiguration)
+            .build());
     when(qBusinessClient.tagResource(any(TagResourceRequest.class)))
         .thenReturn(TagResourceResponse.builder().build());
     request.setPreviousResourceTags(Map.of(
@@ -303,7 +422,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress.isSuccess()).isTrue();
     verify(qBusinessClient).updatePlugin(any(UpdatePluginRequest.class));
 
-    verify(qBusinessClient).getPlugin(
+    verify(qBusinessClient, times(2)).getPlugin(
         argThat((ArgumentMatcher<GetPluginRequest>) t ->
           t.applicationId().equals(APPLICATION_ID) && t.pluginId().equals(PLUGIN_ID)
         )
@@ -325,6 +444,17 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
   @Test
   public void testThatItCallsUnTagButSkipsCallingTag() {
+    when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
+        .thenReturn(GetPluginResponse.builder()
+                  .applicationId(APPLICATION_ID)
+                  .pluginId(PLUGIN_ID)
+                  .displayName(UPDATED_PLUGIN_NAME)
+                  .type(PLUGIN_TYPE)
+                  .state(UPDATED_PLUGIN_STATE)
+                  .buildStatus(PluginBuildStatus.READY)
+                  .serverUrl(UPDATED_SERVER_URL)
+                  .authConfiguration(updatedCfnAuthConfiguration)
+            .build());
     when(qBusinessClient.untagResource(any(UntagResourceRequest.class)))
         .thenReturn(UntagResourceResponse.builder().build());
     model.setTags(List.of(
@@ -350,7 +480,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress).isNotNull();
     assertThat(resultProgress.isSuccess()).isTrue();
     verify(qBusinessClient).updatePlugin(any(UpdatePluginRequest.class));
-    verify(qBusinessClient).getPlugin(
+    verify(qBusinessClient, times(2)).getPlugin(
         argThat((ArgumentMatcher<GetPluginRequest>) t ->
             t.applicationId().equals(APPLICATION_ID) && t.pluginId().equals(PLUGIN_ID)
         )
@@ -398,6 +528,17 @@ public class UpdateHandlerTest extends AbstractTestBase {
       Map<String, String> reqTags,
       Map<String, String> sysTags
   ) {
+    when(qBusinessClient.getPlugin(any(GetPluginRequest.class)))
+        .thenReturn(GetPluginResponse.builder()
+                  .applicationId(APPLICATION_ID)
+                  .pluginId(PLUGIN_ID)
+                  .displayName(UPDATED_PLUGIN_NAME)
+                  .type(PLUGIN_TYPE)
+                  .state(UPDATED_PLUGIN_STATE)
+                  .buildStatus(PluginBuildStatus.READY)
+                  .serverUrl(UPDATED_SERVER_URL)
+                  .authConfiguration(updatedCfnAuthConfiguration)
+            .build());
     // set up test scenario
     model.setTags(modelTags);
     updatedModel.setTags(modelTags);
@@ -415,7 +556,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress).isNotNull();
     assertThat(resultProgress.isSuccess()).isTrue();
     verify(qBusinessClient).updatePlugin(any(UpdatePluginRequest.class));
-    verify(qBusinessClient).getPlugin(
+    verify(qBusinessClient, times(2)).getPlugin(
         argThat((ArgumentMatcher<GetPluginRequest>) t ->
             t.applicationId().equals(APPLICATION_ID) && t.pluginId().equals(PLUGIN_ID)
         )

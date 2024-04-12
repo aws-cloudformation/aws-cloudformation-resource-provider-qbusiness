@@ -1,9 +1,11 @@
 package software.amazon.qbusiness.plugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -28,6 +30,7 @@ import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginResponse;
+import software.amazon.awssdk.services.qbusiness.model.PluginBuildStatus;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
@@ -42,6 +45,7 @@ import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginResponse;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
 import software.amazon.cloudformation.proxy.OperationStatus;
@@ -107,6 +111,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .displayName(PLUGIN_NAME)
                 .type(PLUGIN_TYPE)
                 .state(PLUGIN_STATE)
+                .buildStatus(PluginBuildStatus.READY.toString())
                 .serverUrl(SERVER_URL)
                 .authConfiguration(serviceAuthConfiguration)
                 .createdAt(Instant.ofEpochMilli(CREATED_TIME).toString())
@@ -147,6 +152,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .displayName(PLUGIN_NAME)
                 .type(PLUGIN_TYPE)
                 .state(PLUGIN_STATE)
+                .buildStatus(PluginBuildStatus.READY)
                 .serverUrl(SERVER_URL)
                 .authConfiguration(cfnAuthConfiguration)
                 .createdAt(Instant.ofEpochMilli(CREATED_TIME))
@@ -164,7 +170,7 @@ public class CreateHandlerTest extends AbstractTestBase {
       final ProgressEvent<ResourceModel, CallbackContext> response = underTest.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
       verify(qBusinessClient).createPlugin(any(CreatePluginRequest.class));
-      verify(qBusinessClient).getPlugin(any(GetPluginRequest.class));
+      verify(qBusinessClient, times(2)).getPlugin(any(GetPluginRequest.class));
       verify(qBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
       verify(qBusinessClient).updatePlugin(
           argThat(
@@ -188,10 +194,114 @@ public class CreateHandlerTest extends AbstractTestBase {
       assertThat(resultModel.getPluginId()).isEqualTo(PLUGIN_ID);
       assertThat(resultModel.getType()).isEqualTo(PLUGIN_TYPE);
       assertThat(resultModel.getState()).isEqualTo(PLUGIN_STATE);
+      assertThat(resultModel.getBuildStatus()).isEqualTo(PluginBuildStatus.READY.toString());
       assertThat(resultModel.getDisplayName()).isEqualTo(PLUGIN_NAME);
       assertThat(resultModel.getAuthConfiguration()).isEqualTo(serviceAuthConfiguration);
       assertThat(resultModel.getCreatedAt()).isEqualTo(Instant.ofEpochMilli(CREATED_TIME).toString());
       assertThat(resultModel.getUpdatedAt()).isEqualTo(Instant.ofEpochMilli(UPDATED_TIME).toString());
+    }
+
+    @Test
+    public void handleRequest_StabilizeFromCreateInProgressToReady() {
+
+        when(proxyClient.client().createPlugin(any(CreatePluginRequest.class)))
+                .thenReturn(CreatePluginResponse.builder()
+                        .pluginId(PLUGIN_ID)
+                        .build());
+        when(proxyClient.client().getPlugin(any(GetPluginRequest.class)))
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .displayName(PLUGIN_NAME)
+                        .type(PLUGIN_TYPE)
+                        .state(PLUGIN_STATE)
+                        .buildStatus(PluginBuildStatus.CREATE_IN_PROGRESS)
+                        .serverUrl(SERVER_URL)
+                        .authConfiguration(cfnAuthConfiguration)
+                        .createdAt(Instant.ofEpochMilli(CREATED_TIME))
+                        .updatedAt(Instant.ofEpochMilli(UPDATED_TIME))
+                        .build())
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .displayName(PLUGIN_NAME)
+                        .type(PLUGIN_TYPE)
+                        .state(PLUGIN_STATE)
+                        .buildStatus(PluginBuildStatus.READY)
+                        .serverUrl(SERVER_URL)
+                        .authConfiguration(cfnAuthConfiguration)
+                        .createdAt(Instant.ofEpochMilli(CREATED_TIME))
+                        .updatedAt(Instant.ofEpochMilli(UPDATED_TIME))
+                        .build());
+        when(qBusinessClient.updatePlugin(any(UpdatePluginRequest.class))).thenReturn(UpdatePluginResponse.builder().build());
+        when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
+                .thenReturn(ListTagsForResourceResponse.builder()
+                        .tags(List.of(software.amazon.awssdk.services.qbusiness.model.Tag.builder()
+                                .key("Tag 1")
+                                .value("Tag 2")
+                                .build()))
+                        .build());
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = underTest.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
+
+        verify(qBusinessClient).createPlugin(any(CreatePluginRequest.class));
+        verify(qBusinessClient, times(3)).getPlugin(any(GetPluginRequest.class));
+        verify(qBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
+        verify(qBusinessClient).updatePlugin(
+                argThat(
+                        (ArgumentMatcher<UpdatePluginRequest>) t -> t.stateAsString().equals(PLUGIN_STATE) &&
+                                t.applicationId().equals(APPLICATION_ID) &&
+                                t.pluginId().equals(PLUGIN_ID)
+                )
+        );
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+
+        ResourceModel resultModel = response.getResourceModel();
+
+        assertThat(resultModel.getApplicationId()).isEqualTo(APPLICATION_ID);
+        assertThat(resultModel.getPluginId()).isEqualTo(PLUGIN_ID);
+        assertThat(resultModel.getType()).isEqualTo(PLUGIN_TYPE);
+        assertThat(resultModel.getState()).isEqualTo(PLUGIN_STATE);
+        assertThat(resultModel.getBuildStatus()).isEqualTo(PluginBuildStatus.READY.toString());
+        assertThat(resultModel.getDisplayName()).isEqualTo(PLUGIN_NAME);
+        assertThat(resultModel.getAuthConfiguration()).isEqualTo(serviceAuthConfiguration);
+        assertThat(resultModel.getCreatedAt()).isEqualTo(Instant.ofEpochMilli(CREATED_TIME).toString());
+        assertThat(resultModel.getUpdatedAt()).isEqualTo(Instant.ofEpochMilli(UPDATED_TIME).toString());
+    }
+
+    @Test
+    public void handleRequest_ThrowsExpectedErrorWhenStabilizationFails() {
+
+        when(proxyClient.client().createPlugin(any(CreatePluginRequest.class)))
+                .thenReturn(CreatePluginResponse.builder()
+                        .pluginId(PLUGIN_ID)
+                        .build());
+        when(proxyClient.client().getPlugin(any(GetPluginRequest.class)))
+                .thenReturn(GetPluginResponse.builder()
+                        .applicationId(APPLICATION_ID)
+                        .pluginId(PLUGIN_ID)
+                        .displayName(PLUGIN_NAME)
+                        .type(PLUGIN_TYPE)
+                        .state(PLUGIN_STATE)
+                        .buildStatus(PluginBuildStatus.CREATE_FAILED)
+                        .serverUrl(SERVER_URL)
+                        .authConfiguration(cfnAuthConfiguration)
+                        .createdAt(Instant.ofEpochMilli(CREATED_TIME))
+                        .updatedAt(Instant.ofEpochMilli(UPDATED_TIME))
+                        .build());
+
+        assertThatThrownBy(() -> underTest.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger))
+                .isInstanceOf(CfnNotStabilizedException.class);
+
+        verify(qBusinessClient).createPlugin(any(CreatePluginRequest.class));
+        verify(qBusinessClient).getPlugin(any(GetPluginRequest.class));
     }
 
     @Test
@@ -210,6 +320,7 @@ public class CreateHandlerTest extends AbstractTestBase {
               .displayName(PLUGIN_NAME)
               .type(PLUGIN_TYPE)
               .state(PLUGIN_STATE)
+              .buildStatus(PluginBuildStatus.READY)
               .serverUrl(SERVER_URL)
               .authConfiguration(cfnAuthConfiguration)
               .createdAt(Instant.ofEpochMilli(CREATED_TIME))
@@ -225,7 +336,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
       // verify results
       verify(qBusinessClient).createPlugin(any(CreatePluginRequest.class));
-      verify(qBusinessClient).getPlugin(any(GetPluginRequest.class));
+      verify(qBusinessClient, times(2)).getPlugin(any(GetPluginRequest.class));
       verify(qBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
 
       assertThat(response).isNotNull();

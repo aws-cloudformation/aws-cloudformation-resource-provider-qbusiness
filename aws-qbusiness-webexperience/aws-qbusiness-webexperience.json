@@ -56,10 +56,6 @@
       ],
       "additionalProperties": false
     },
-    "Unit": {
-      "type": "object",
-      "additionalProperties": false
-    },
     "WebExperienceAuthConfiguration": {
       "oneOf": [
         {

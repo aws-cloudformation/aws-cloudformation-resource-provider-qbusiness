@@ -112,6 +112,9 @@
       "minLength": 0
     }
   },
+  "required": [
+    "ApplicationId"
+  ],
   "readOnlyProperties": [
     "/properties/CreatedAt",
     "/properties/DefaultEndpoint",

@@ -138,7 +138,8 @@
         "qbusiness:GetWebExperience",
         "qbusiness:ListTagsForResource",
         "qbusiness:TagResource",
-        "sso:PutApplicationGrant"
+        "sso:PutApplicationGrant",
+        "sso:UpdateApplication"
       ]
     },
     "read": {
@@ -155,7 +156,8 @@
         "qbusiness:TagResource",
         "qbusiness:UntagResource",
         "qbusiness:UpdateWebExperience",
-        "sso:PutApplicationGrant"
+        "sso:PutApplicationGrant",
+        "sso:UpdateApplication"
       ]
     },
     "delete": {

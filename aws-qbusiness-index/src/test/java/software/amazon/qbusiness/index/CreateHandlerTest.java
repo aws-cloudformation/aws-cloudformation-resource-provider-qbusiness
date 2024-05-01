@@ -30,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
+import software.amazon.awssdk.services.qbusiness.model.AttributeType;
 import software.amazon.awssdk.services.qbusiness.model.ConflictException;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexResponse;
@@ -44,7 +45,10 @@ import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceReques
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.qbusiness.model.ServiceQuotaExceededException;
+import software.amazon.awssdk.services.qbusiness.model.Status;
 import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
+import software.amazon.awssdk.services.qbusiness.model.UpdateIndexRequest;
+import software.amazon.awssdk.services.qbusiness.model.UpdateIndexResponse;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
 import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;

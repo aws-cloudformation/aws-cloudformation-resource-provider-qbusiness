@@ -42,6 +42,11 @@ Resources:
                 - "qbusiness:TagResource"
                 - "qbusiness:UntagResource"
                 - "qbusiness:UpdateApplication"
+                - "sso:CreateApplication"
+                - "sso:DeleteApplication"
+                - "sso:PutApplicationAccessScope"
+                - "sso:PutApplicationAuthenticationMethod"
+                - "sso:PutApplicationGrant"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

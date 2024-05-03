@@ -313,6 +313,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     );
   }
 
+  
   @ParameterizedTest
   @MethodSource("createIndexErrorsAndExpectedCodes")
   public void testItReturnsExpectedCfnErrorWhenCreateIndexFails(

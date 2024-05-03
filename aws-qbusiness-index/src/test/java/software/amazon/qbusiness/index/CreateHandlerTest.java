@@ -312,7 +312,6 @@ public class CreateHandlerTest extends AbstractTestBase {
         Arguments.of(InternalServerException.builder().build(), HandlerErrorCode.GeneralServiceException)
     );
   }
-
   
   @ParameterizedTest
   @MethodSource("createIndexErrorsAndExpectedCodes")

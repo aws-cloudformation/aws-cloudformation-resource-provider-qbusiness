@@ -314,7 +314,8 @@
         "qbusiness:CreatePlugin",
         "qbusiness:GetPlugin",
         "qbusiness:ListTagsForResource",
-        "qbusiness:TagResource"
+        "qbusiness:TagResource",
+        "qbusiness:UpdatePlugin"
       ]
     },
     "read": {

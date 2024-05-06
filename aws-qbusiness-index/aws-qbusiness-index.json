@@ -203,7 +203,8 @@
         "qbusiness:CreateIndex",
         "qbusiness:GetIndex",
         "qbusiness:ListTagsForResource",
-        "qbusiness:TagResource"
+        "qbusiness:TagResource",
+        "qbusiness:UpdateIndex"
       ]
     },
     "read": {

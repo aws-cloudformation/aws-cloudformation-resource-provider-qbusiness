@@ -39,6 +39,8 @@ Resources:
                 - "qbusiness:TagResource"
                 - "qbusiness:UntagResource"
                 - "qbusiness:UpdateWebExperience"
+                - "sso:PutApplicationGrant"
+                - "sso:UpdateApplication"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

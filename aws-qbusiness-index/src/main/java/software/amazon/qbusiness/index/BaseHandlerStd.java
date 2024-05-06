@@ -70,14 +70,14 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
   }
 
   protected ProgressEvent<ResourceModel, CallbackContext> handleError(
-      final QBusinessRequest QBusinessRequest,
+      final QBusinessRequest qBusinessRequest,
       final ResourceModel resourceModel,
       final Exception error,
       final CallbackContext context,
       final Logger logger,
       final String apiName) {
 
-    logger.log("[ERROR] Failed Request: %s to API: %s. Error Message: %s".formatted(QBusinessRequest, apiName, error.getMessage()));
+    logger.log("[ERROR] Failed Request: %s. Error Message: %s".formatted(apiName, error.getMessage()));
     BaseHandlerException cfnException;
 
     var primaryIdentifier = Optional.ofNullable(resourceModel)

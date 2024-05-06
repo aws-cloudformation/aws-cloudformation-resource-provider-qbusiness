@@ -5,6 +5,8 @@ import software.amazon.awssdk.services.qbusiness.model.CreateIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateIndexResponse;
 import software.amazon.awssdk.services.qbusiness.model.GetIndexResponse;
 import software.amazon.awssdk.services.qbusiness.model.IndexStatus;
+import software.amazon.awssdk.services.qbusiness.model.UpdateIndexRequest;
+import software.amazon.awssdk.services.qbusiness.model.UpdateIndexResponse;
 import software.amazon.awssdk.utils.StringUtils;
 import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -18,6 +20,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 import static software.amazon.qbusiness.index.Constants.API_CREATE_INDEX;
+import static software.amazon.qbusiness.index.Constants.API_UPDATE_INDEX;
 
 public class CreateHandler extends BaseHandlerStd {
 
@@ -59,7 +62,28 @@ public class CreateHandler extends BaseHandlerStd {
                 .handleError((createReq, error, client, model, context) ->
                     handleError(createReq, model, error, context, logger, API_CREATE_INDEX))
                 .progress()
-        ).then(progress ->
+        )
+        .then(progress -> {
+          var documentAttributionConfig = request.getDesiredResourceState().getDocumentAttributeConfigurations();
+          if (documentAttributionConfig == null || documentAttributionConfig.isEmpty()) {
+            return progress;
+          }
+          logger.log(
+              "[INFO] Document Attribute configuration is present. Will call Update Index for %s for Account: %s, ApplicationId: %s, and index: %s"
+                  .formatted(request.getStackId(), request.getAwsAccountId(), request.getDesiredResourceState().getApplicationId(),
+                      progress.getResourceModel().getIndexId())
+          );
+
+          return proxy.initiate("AWS-QBusiness-Index::PostCreateUpdate", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
+              .translateToServiceRequest(Translator::translateToPostCreateUpdateRequest)
+              .makeServiceCall(this::callUpdateIndex)
+              .stabilize((updateIndexRequest, updateIndexResponse, clientProxyClient, model, context) ->
+                  isStabilized(clientProxyClient, model, logger))
+              .handleError((updateIndexRequest, error, client, model, context) ->
+                  handleError(updateIndexRequest, model, error, context, logger, API_UPDATE_INDEX))
+              .progress();
+        })
+        .then(progress ->
             new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger)
         );
   }
@@ -95,10 +119,17 @@ public class CreateHandler extends BaseHandlerStd {
   }
 
   private CreateIndexResponse callCreateIndex(final CreateIndexRequest request,
-                                              final ProxyClient<QBusinessClient> proxyClient,
-                                              final ResourceModel model) {
+      final ProxyClient<QBusinessClient> proxyClient,
+      final ResourceModel model) {
     CreateIndexResponse response = proxyClient.injectCredentialsAndInvokeV2(request, proxyClient.client()::createIndex);
     model.setIndexId(response.indexId());
     return response;
+  }
+
+  private UpdateIndexResponse callUpdateIndex(
+      final UpdateIndexRequest updateIndexRequest,
+      final ProxyClient<QBusinessClient> proxyClient
+  ) {
+    return proxyClient.injectCredentialsAndInvokeV2(updateIndexRequest, proxyClient.client()::updateIndex);
   }
 }

@@ -88,6 +88,7 @@ public class Translator {
         .displayName(awsResponse.displayName())
         .applicationId(awsResponse.applicationId())
         .indexId(awsResponse.indexId())
+        .indexArn(awsResponse.indexArn())
         .indexStatistics(fromServiceIndexStatistics(awsResponse.indexStatistics()))
         .status(awsResponse.statusAsString())
         .description(awsResponse.description())
@@ -143,6 +144,14 @@ public class Translator {
         .description(model.getDescription())
         .documentAttributeConfigurations(toServiceDocumentAttributeConfigurations(model.getDocumentAttributeConfigurations()))
         .capacityConfiguration(toServiceCapacityConfiguration(model.getCapacityConfiguration()))
+        .build();
+  }
+
+  static UpdateIndexRequest translateToPostCreateUpdateRequest(final ResourceModel model) {
+    return UpdateIndexRequest.builder()
+        .applicationId(model.getApplicationId())
+        .indexId(model.getIndexId())
+        .documentAttributeConfigurations(toServiceDocumentAttributeConfigurations(model.getDocumentAttributeConfigurations()))
         .build();
   }
 

@@ -178,6 +178,8 @@ public class CreateHandlerTest extends AbstractTestBase {
             .indexId(INDEX_ID)
             .build()
         );
+    when(QBusinessClient.updateIndex(any(UpdateIndexRequest.class)))
+        .thenReturn(UpdateIndexResponse.builder().build());
     when(QBusinessClient.listTagsForResource(any(ListTagsForResourceRequest.class))).thenReturn(ListTagsForResourceResponse.builder()
         .tags(List.of())
         .build());
@@ -218,8 +220,15 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress).isNotNull();
     assertThat(resultProgress.isSuccess()).isTrue();
     verify(QBusinessClient).createIndex(any(CreateIndexRequest.class));
-    verify(QBusinessClient, times(2)).getIndex(any(GetIndexRequest.class));
+    verify(QBusinessClient, times(4)).getIndex(any(GetIndexRequest.class));
     verify(QBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
+    verify(QBusinessClient).updateIndex(
+        argThat(
+            (ArgumentMatcher<UpdateIndexRequest>) t -> t.applicationId().equals(APP_ID)
+                && t.indexId().equals(INDEX_ID)
+                && t.hasDocumentAttributeConfigurations()
+        )
+    );
   }
 
   @Test

@@ -104,6 +104,8 @@ public class CreateHandlerTest extends AbstractTestBase {
                     "Type", "WebcrawlerV2",
                     "Links", List.of("link1", "link2"),
                     "depth", 50,
+                    "crawlEverything", "false",
+                    "doTheThing", "true",
                     "overrides", Map.of(
                         "a", 10
                     )
@@ -184,6 +186,8 @@ public class CreateHandlerTest extends AbstractTestBase {
         "Type", Document.fromString("WebcrawlerV2"),
         "Links", Document.fromList(List.of(Document.fromString("link1"), Document.fromString("link2"))),
         "depth", Document.fromNumber(50),
+        "crawlEverything", Document.fromBoolean(false),
+        "doTheThing", Document.fromBoolean(true),
         "overrides", Document.fromMap(Map.of(
             "a", Document.fromNumber(10)
         ))

@@ -54,6 +54,12 @@ public final class DocumentConverter {
     if (value instanceof Boolean bool) {
       return Document.fromBoolean(bool);
     } else if (value instanceof String string) {
+      // Due to how yaml handles values, we'll receive boolean values as strings.
+      // Parse "true"/"false" as booleans to allow creating datasources like webcrawler: https://docs.aws.amazon.com/amazonq/latest/qbusiness-ug/web-crawler-api.html
+      if ("true".equals(string) || "false".equals(string)) {
+        var boolValue = Boolean.parseBoolean(string);
+        return Document.fromBoolean(boolValue);
+      }
       return Document.fromString(string);
     } else if (value instanceof Number) {
       if (value instanceof Integer integer) {

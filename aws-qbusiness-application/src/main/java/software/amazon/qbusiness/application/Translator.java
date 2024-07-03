@@ -18,6 +18,7 @@ import software.amazon.awssdk.services.qbusiness.model.Tag;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationRequest;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 /**
@@ -45,6 +46,7 @@ public class Translator {
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
         .build();
   }
 
@@ -87,6 +89,7 @@ public class Translator {
         .updatedAt(instantToString(awsResponse.updatedAt()))
         .encryptionConfiguration(fromServiceEncryptionConfig(awsResponse.encryptionConfiguration()))
         .attachmentsConfiguration(fromServiceAttachmentConfiguration(awsResponse.attachmentsConfiguration()))
+        .qAppsConfiguration(fromServiceQAppsConfiguration(awsResponse.qAppsConfiguration()))
         .build();
   }
 
@@ -144,6 +147,30 @@ public class Translator {
         .build();
   }
 
+  static QAppsConfiguration fromServiceQAppsConfiguration(
+      software.amazon.awssdk.services.qbusiness.model.QAppsConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return QAppsConfiguration.builder()
+        .qAppsControlMode(serviceConfig.qAppsControlModeAsString())
+        .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.QAppsConfiguration toServiceQAppsConfiguration(
+      QAppsConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.QAppsConfiguration.builder()
+        .qAppsControlMode(modelConfig.getQAppsControlMode())
+        .build();
+  }
+
   static ResourceModel translateFromReadResponseWithTags(final ListTagsForResourceResponse listTagsResponse, final ResourceModel model) {
     if (listTagsResponse == null || !listTagsResponse.hasTags()) {
       return model;
@@ -180,6 +207,7 @@ public class Translator {
         .roleArn(model.getRoleArn())
         .identityCenterInstanceArn(model.getIdentityCenterInstanceArn())
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
+        .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
         .build();
   }
 

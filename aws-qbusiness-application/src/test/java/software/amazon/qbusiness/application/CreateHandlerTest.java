@@ -91,6 +91,9 @@ public class CreateHandlerTest extends AbstractTestBase {
         .description("A Description")
         .roleArn("such role, very arn")
         .identityCenterInstanceArn("arn:aws:sso:::instance/ssoins")
+        .identityType("AWS_IAM_IDP_OIDC")
+        .iamIdentityProviderArn("arn:aws:iam::123456:oidc-provider/trial-123456.okta.com")
+        .clientIdForOIDC("0oaglq4vdnaWau7hW697")
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()

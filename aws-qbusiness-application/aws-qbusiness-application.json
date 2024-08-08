@@ -42,6 +42,14 @@
       },
       "additionalProperties": false
     },
+    "IdentityType": {
+      "type": "string",
+      "enum": [
+        "AWS_IAM_IDP_SAML",
+        "AWS_IAM_IDP_OIDC",
+        "AWS_IAM_IDC"
+      ]
+    },
     "QAppsConfiguration": {
       "type": "object",
       "properties": {
@@ -98,6 +106,11 @@
     "AttachmentsConfiguration": {
       "$ref": "#/definitions/AttachmentsConfiguration"
     },
+    "ClientIdForOIDC": {
+      "type": "string",
+      "maxLength": 255,
+      "minLength": 1
+    },
     "CreatedAt": {
       "type": "string",
       "format": "date-time"
@@ -131,6 +144,15 @@
       "maxLength": 1224,
       "minLength": 10,
       "pattern": "^arn:(aws|aws-us-gov|aws-cn|aws-iso|aws-iso-b):sso:::instance/(sso)?ins-[a-zA-Z0-9-.]{16}$"
+    },
+    "IamIdentityProviderArn": {
+      "type": "string",
+      "maxLength": 2048,
+      "minLength": 20,
+      "pattern": "^arn:aws:iam::\\d{12}:(oidc-provider|saml-provider)/[a-zA-Z0-9_\\.\\/@\\-]+$"
+    },
+    "IdentityType": {
+      "$ref": "#/definitions/IdentityType"
     },
     "RoleArn": {
       "type": "string",
@@ -170,7 +192,10 @@
     "/properties/IdentityCenterInstanceArn"
   ],
   "createOnlyProperties": [
-    "/properties/EncryptionConfiguration"
+    "/properties/ClientIdForOIDC",
+    "/properties/EncryptionConfiguration",
+    "/properties/IamIdentityProviderArn",
+    "/properties/IdentityType"
   ],
   "primaryIdentifier": [
     "/properties/ApplicationId"
@@ -189,7 +214,9 @@
         "sso:DeleteApplication",
         "sso:PutApplicationAccessScope",
         "sso:PutApplicationAuthenticationMethod",
-        "sso:PutApplicationGrant"
+        "sso:PutApplicationGrant",
+        "iam:GetSAMLProvider",
+        "sso:DescribeInstance"
       ]
     },
     "read": {
@@ -210,7 +237,8 @@
         "sso:DeleteApplication",
         "sso:PutApplicationAccessScope",
         "sso:PutApplicationAuthenticationMethod",
-        "sso:PutApplicationGrant"
+        "sso:PutApplicationGrant",
+        "sso:DescribeInstance"
       ]
     },
     "delete": {

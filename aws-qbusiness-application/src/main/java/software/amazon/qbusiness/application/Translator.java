@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import software.amazon.awssdk.services.qbusiness.model.CreateApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeleteApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
@@ -41,6 +43,9 @@ public class Translator {
         .clientToken(idempotentToken)
         .displayName(model.getDisplayName())
         .roleArn(model.getRoleArn())
+        .identityType(model.getIdentityType())
+        .iamIdentityProviderArn(model.getIamIdentityProviderArn())
+        .clientIdForOIDC(model.getClientIdForOIDC())
         .identityCenterInstanceArn(model.getIdentityCenterInstanceArn())
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
@@ -77,11 +82,14 @@ public class Translator {
    * @return model resource model
    */
   static ResourceModel translateFromReadResponse(final GetApplicationResponse awsResponse) {
-    return ResourceModel.builder()
+    var response = ResourceModel.builder()
         .displayName(awsResponse.displayName())
         .applicationId(awsResponse.applicationId())
         .applicationArn(awsResponse.applicationArn())
         .roleArn(awsResponse.roleArn())
+        .identityType(awsResponse.identityTypeAsString())
+        .iamIdentityProviderArn(awsResponse.iamIdentityProviderArn())
+        .clientIdForOIDC(awsResponse.clientIdForOIDC())
         .identityCenterApplicationArn(awsResponse.identityCenterApplicationArn())
         .status(awsResponse.statusAsString())
         .description(awsResponse.description())
@@ -91,6 +99,13 @@ public class Translator {
         .attachmentsConfiguration(fromServiceAttachmentConfiguration(awsResponse.attachmentsConfiguration()))
         .qAppsConfiguration(fromServiceQAppsConfiguration(awsResponse.qAppsConfiguration()))
         .build();
+    // TODO: Workaround. This is a readonly field. But it is only returned if customer is using IDC
+    // When that's not the case, let's fill it in with N/A
+    // Contract test require readonly fields are returned.
+    if (StringUtils.isEmpty(response.getIdentityCenterApplicationArn())) {
+      response.setIdentityCenterApplicationArn("N/A");
+    }
+    return response;
   }
 
   static String instantToString(Instant instant) {
@@ -238,6 +253,7 @@ public class Translator {
             .createdAt(instantToString(application.createdAt()))
             .updatedAt(instantToString(application.updatedAt()))
             .status(application.statusAsString())
+            .identityType(application.identityTypeAsString())
             .build()
         )
         .toList();

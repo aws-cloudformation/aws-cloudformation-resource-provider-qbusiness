@@ -90,7 +90,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
     if (error instanceof ResourceNotFoundException) {
       cfnException = new CfnNotFoundException(ResourceModel.TYPE_NAME, primaryIdentifier, error);
-    } else if (error instanceof ValidationException) {
+    } else if (error instanceof ValidationException || error instanceof CfnInvalidRequestException) {
       cfnException = new CfnInvalidRequestException(error);
     } else if (error instanceof ThrottlingException) {
       cfnException = new CfnThrottlingException(apiName, error);

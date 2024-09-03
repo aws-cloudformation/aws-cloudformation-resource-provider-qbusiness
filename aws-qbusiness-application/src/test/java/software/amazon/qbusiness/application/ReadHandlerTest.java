@@ -28,6 +28,9 @@ import software.amazon.awssdk.services.qbusiness.model.AccessDeniedException;
 import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
 import software.amazon.awssdk.services.qbusiness.model.AppliedAttachmentsConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.AttachmentsControlMode;
+import software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionConfiguration;
+import software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionStatus;
+import software.amazon.awssdk.services.qbusiness.model.SubscriptionType;
 import software.amazon.awssdk.services.qbusiness.model.EncryptionConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
@@ -107,12 +110,19 @@ public class ReadHandlerTest extends AbstractTestBase {
             .description("this is a description, there are many like it but this one is mine.")
             .displayName("Foobar")
             .identityCenterApplicationArn("arn:aws:sso::123456789012:application/ssoins/apl")
+            .identityType("AWS_IAM_IDP_OIDC")
+            .iamIdentityProviderArn("arn:aws:iam::123456:oidc-provider/trial-123456.okta.com")
+            .clientIdsForOIDC(List.of("0oaglq4vdnaWau7hW697"))
             .status(ApplicationStatus.ACTIVE)
             .encryptionConfiguration(EncryptionConfiguration.builder()
                 .kmsKeyId("keyblade")
                 .build())
             .attachmentsConfiguration(AppliedAttachmentsConfiguration.builder()
                 .attachmentsControlMode(AttachmentsControlMode.ENABLED)
+                .build())
+            .autoSubscriptionConfiguration(AutoSubscriptionConfiguration.builder()
+                .autoSubscribe(AutoSubscriptionStatus.ENABLED.toString())
+                .defaultSubscriptionType(SubscriptionType.Q_BUSINESS.toString())
                 .build())
             .build());
     when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
@@ -149,6 +159,9 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getStatus()).isEqualTo(ApplicationStatus.ACTIVE.toString());
     assertThat(resultModel.getEncryptionConfiguration().getKmsKeyId()).isEqualTo("keyblade");
     assertThat(resultModel.getAttachmentsConfiguration().getAttachmentsControlMode()).isEqualTo(AttachmentsControlMode.ENABLED.toString());
+    assertThat(resultModel.getAutoSubscriptionConfiguration().getAutoSubscribe()).isEqualTo(AutoSubscriptionStatus.ENABLED.toString());
+    assertThat(resultModel.getAutoSubscriptionConfiguration().getDefaultSubscriptionType()).isEqualTo(SubscriptionType.Q_BUSINESS.toString());
+
 
     var tags = resultModel.getTags().stream().map(tag -> Map.entry(tag.getKey(), tag.getValue())).toList();
     assertThat(tags).isEqualTo(List.of(

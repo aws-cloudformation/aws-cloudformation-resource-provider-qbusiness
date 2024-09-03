@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import software.amazon.awssdk.services.qbusiness.model.CreateApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeleteApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
@@ -41,12 +43,16 @@ public class Translator {
         .clientToken(idempotentToken)
         .displayName(model.getDisplayName())
         .roleArn(model.getRoleArn())
+        .identityType(model.getIdentityType())
+        .iamIdentityProviderArn(model.getIamIdentityProviderArn())
+        .clientIdsForOIDC(model.getClientIdsForOIDC())
         .identityCenterInstanceArn(model.getIdentityCenterInstanceArn())
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
+        .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
         .build();
   }
 
@@ -77,11 +83,14 @@ public class Translator {
    * @return model resource model
    */
   static ResourceModel translateFromReadResponse(final GetApplicationResponse awsResponse) {
-    return ResourceModel.builder()
+    var response = ResourceModel.builder()
         .displayName(awsResponse.displayName())
         .applicationId(awsResponse.applicationId())
         .applicationArn(awsResponse.applicationArn())
         .roleArn(awsResponse.roleArn())
+        .identityType(awsResponse.identityTypeAsString())
+        .iamIdentityProviderArn(awsResponse.iamIdentityProviderArn())
+        .clientIdsForOIDC(awsResponse.clientIdsForOIDC())
         .identityCenterApplicationArn(awsResponse.identityCenterApplicationArn())
         .status(awsResponse.statusAsString())
         .description(awsResponse.description())
@@ -90,7 +99,16 @@ public class Translator {
         .encryptionConfiguration(fromServiceEncryptionConfig(awsResponse.encryptionConfiguration()))
         .attachmentsConfiguration(fromServiceAttachmentConfiguration(awsResponse.attachmentsConfiguration()))
         .qAppsConfiguration(fromServiceQAppsConfiguration(awsResponse.qAppsConfiguration()))
+        .personalizationConfiguration(fromServicePersonalizationConfiguration(awsResponse.personalizationConfiguration()))
+        .autoSubscriptionConfiguration(fromServiceAutoSubscriptionConfiguration(awsResponse.autoSubscriptionConfiguration()))
         .build();
+    // TODO: Workaround. This is a readonly field. But it is only returned if customer is using IDC
+    // When that's not the case, let's fill it in with N/A
+    // Contract test require readonly fields are returned.
+    if (StringUtils.isEmpty(response.getIdentityCenterApplicationArn())) {
+      response.setIdentityCenterApplicationArn("N/A");
+    }
+    return response;
   }
 
   static String instantToString(Instant instant) {
@@ -171,6 +189,60 @@ public class Translator {
         .build();
   }
 
+  static PersonalizationConfiguration fromServicePersonalizationConfiguration(
+      software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return PersonalizationConfiguration.builder()
+        .personalizationControlMode(serviceConfig.personalizationControlModeAsString())
+        .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration toServicePersonalizationConfiguration(
+      PersonalizationConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration.builder()
+        .personalizationControlMode(modelConfig.getPersonalizationControlMode())
+        .build();
+  }
+
+  static AutoSubscriptionConfiguration fromServiceAutoSubscriptionConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    if (serviceConfig.autoSubscribe() == null && serviceConfig.defaultSubscriptionType() == null) {
+      return null;
+    }
+
+    return AutoSubscriptionConfiguration.builder()
+            .autoSubscribe(serviceConfig.autoSubscribeAsString())
+            .defaultSubscriptionType(serviceConfig.defaultSubscriptionTypeAsString())
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionConfiguration toServiceAutoSubscriptionConfiguration(
+      AutoSubscriptionConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionConfiguration.builder()
+        .autoSubscribe(modelConfig.getAutoSubscribe())
+        .defaultSubscriptionType(modelConfig.getDefaultSubscriptionType())
+        .build();
+  }
+
   static ResourceModel translateFromReadResponseWithTags(final ListTagsForResourceResponse listTagsResponse, final ResourceModel model) {
     if (listTagsResponse == null || !listTagsResponse.hasTags()) {
       return model;
@@ -208,7 +280,16 @@ public class Translator {
         .identityCenterInstanceArn(model.getIdentityCenterInstanceArn())
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
         .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
+        .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
+        .autoSubscriptionConfiguration(toServiceAutoSubscriptionConfiguration(model.getAutoSubscriptionConfiguration()))
         .build();
+  }
+
+  static UpdateApplicationRequest translateToPostCreateUpdateRequest(final ResourceModel model) {
+    return UpdateApplicationRequest.builder()
+            .applicationId(model.getApplicationId())
+            .autoSubscriptionConfiguration(toServiceAutoSubscriptionConfiguration(model.getAutoSubscriptionConfiguration()))
+            .build();
   }
 
   /**
@@ -238,6 +319,7 @@ public class Translator {
             .createdAt(instantToString(application.createdAt()))
             .updatedAt(instantToString(application.updatedAt()))
             .status(application.statusAsString())
+            .identityType(application.identityTypeAsString())
             .build()
         )
         .toList();

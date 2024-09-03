@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -42,6 +43,9 @@ import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException
 import software.amazon.awssdk.services.qbusiness.model.ServiceQuotaExceededException;
 import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
+import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationRequest;
+import software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionStatus;
+import software.amazon.awssdk.services.qbusiness.model.SubscriptionType;
 import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.HandlerErrorCode;
@@ -91,6 +95,13 @@ public class CreateHandlerTest extends AbstractTestBase {
         .description("A Description")
         .roleArn("such role, very arn")
         .identityCenterInstanceArn("arn:aws:sso:::instance/ssoins")
+        .identityType("AWS_IAM_IDP_OIDC")
+        .autoSubscriptionConfiguration(AutoSubscriptionConfiguration.builder()
+            .autoSubscribe(AutoSubscriptionStatus.ENABLED.toString())
+            .defaultSubscriptionType(SubscriptionType.Q_BUSINESS.toString())
+            .build())
+        .iamIdentityProviderArn("arn:aws:iam::123456:oidc-provider/trial-123456.okta.com")
+        .clientIdsForOIDC(List.of("0oaglq4vdnaWau7hW697"))
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -145,8 +156,11 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(model.getStatus()).isEqualTo(ApplicationStatus.ACTIVE.toString());
 
     verify(sdkClient).createApplication(any(CreateApplicationRequest.class));
-    verify(sdkClient, times(2)).getApplication(
+    verify(sdkClient, times(3)).getApplication(
         argThat((ArgumentMatcher<GetApplicationRequest>) t -> t.applicationId().equals(APP_ID))
+    );
+    verify(sdkClient, times(1)).updateApplication(
+            argThat((ArgumentMatcher<UpdateApplicationRequest>) t -> t.applicationId().equals(APP_ID))
     );
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
   }
@@ -180,8 +194,11 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultProgress).isNotNull();
     assertThat(resultProgress.isSuccess()).isTrue();
     verify(sdkClient).createApplication(any(CreateApplicationRequest.class));
-    verify(sdkClient, times(3)).getApplication(
+    verify(sdkClient, times(4)).getApplication(
         argThat((ArgumentMatcher<GetApplicationRequest>) t -> t.applicationId().equals(APP_ID))
+    );
+    verify(sdkClient, times(1)).updateApplication(
+            argThat((ArgumentMatcher<UpdateApplicationRequest>) t -> t.applicationId().equals(APP_ID))
     );
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
   }

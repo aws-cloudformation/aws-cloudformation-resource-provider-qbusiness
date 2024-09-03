@@ -30,6 +30,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                - "iam:GetSAMLProvider"
                 - "iam:PassRole"
                 - "kms:CreateGrant"
                 - "kms:DescribeKey"
@@ -44,6 +45,7 @@ Resources:
                 - "qbusiness:UpdateApplication"
                 - "sso:CreateApplication"
                 - "sso:DeleteApplication"
+                - "sso:DescribeInstance"
                 - "sso:PutApplicationAccessScope"
                 - "sso:PutApplicationAuthenticationMethod"
                 - "sso:PutApplicationGrant"

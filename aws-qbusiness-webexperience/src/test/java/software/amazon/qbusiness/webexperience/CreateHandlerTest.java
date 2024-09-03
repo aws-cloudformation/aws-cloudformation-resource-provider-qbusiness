@@ -65,6 +65,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
   private Constant testBackOff;
   private CreateHandler underTest;
+  private IdentityProviderConfiguration identityProviderConfiguration;
 
   private AutoCloseable testMocks;
 
@@ -84,11 +85,16 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     underTest = new CreateHandler(testBackOff);
 
+    identityProviderConfiguration = IdentityProviderConfiguration.builder()
+            .samlConfiguration(SamlProviderConfiguration.builder().authenticationUrl("https://someTestAuthenticationUrl").build())
+            .build();
+
     createModel = ResourceModel.builder()
         .applicationId(APP_ID)
         .title("This is a title of the web experience.")
         .subtitle("This is a subtitle of the web experience.")
         .roleArn("RoleArn")
+        .identityProviderConfiguration(identityProviderConfiguration)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()

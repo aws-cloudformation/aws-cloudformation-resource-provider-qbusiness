@@ -44,6 +44,7 @@ public class Translator {
         .clientToken(idempotentToken)
         .applicationId(model.getApplicationId())
         .roleArn(model.getRoleArn())
+        .identityProviderConfiguration(toIdentityProviderConfiguration(model.getIdentityProviderConfiguration()))
         .title(model.getTitle())
         .subtitle(model.getSubtitle())
         .welcomeMessage(model.getWelcomeMessage())
@@ -96,6 +97,7 @@ public class Translator {
         .welcomeMessage(awsResponse.welcomeMessage())
         .samplePromptsControlMode(awsResponse.samplePromptsControlModeAsString())
         .roleArn(awsResponse.roleArn())
+        .identityProviderConfiguration(fromIdentityProviderConfiguration(awsResponse.identityProviderConfiguration()))
         .defaultEndpoint(awsResponse.defaultEndpoint())
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
@@ -145,7 +147,85 @@ public class Translator {
         .title(model.getTitle())
         .subtitle(model.getSubtitle())
         .roleArn(model.getRoleArn())
+        .identityProviderConfiguration(toIdentityProviderConfiguration(model.getIdentityProviderConfiguration()))
         .build();
+  }
+
+  static IdentityProviderConfiguration fromIdentityProviderConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.IdentityProviderConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return IdentityProviderConfiguration.builder()
+            .openIDConnectConfiguration(fromOpenIDConnectProviderConfiguration(serviceConfig.openIDConnectConfiguration()))
+            .samlConfiguration(fromSamlProviderConfiguration(serviceConfig.samlConfiguration()))
+            .build();
+  }
+
+  static OpenIDConnectProviderConfiguration fromOpenIDConnectProviderConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.OpenIDConnectProviderConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return OpenIDConnectProviderConfiguration.builder()
+            .secretsArn(serviceConfig.secretsArn())
+            .secretsRole(serviceConfig.secretsRole())
+            .build();
+  }
+
+  static SamlProviderConfiguration fromSamlProviderConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.SamlProviderConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return SamlProviderConfiguration.builder()
+            .authenticationUrl(serviceConfig.authenticationUrl())
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.OpenIDConnectProviderConfiguration toOpenIDConnectProviderConfiguration(
+          OpenIDConnectProviderConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.OpenIDConnectProviderConfiguration.builder()
+            .secretsArn(modelConfig.getSecretsArn())
+            .secretsRole(modelConfig.getSecretsRole())
+            .build();
+  }
+
+
+  static software.amazon.awssdk.services.qbusiness.model.SamlProviderConfiguration toSamlProviderConfiguration(
+          SamlProviderConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.SamlProviderConfiguration.builder()
+            .authenticationUrl(modelConfig.getAuthenticationUrl())
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.IdentityProviderConfiguration toIdentityProviderConfiguration(
+          IdentityProviderConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.IdentityProviderConfiguration.builder()
+            .samlConfiguration(toSamlProviderConfiguration(modelConfig.getSamlConfiguration()))
+            .openIDConnectConfiguration(toOpenIDConnectProviderConfiguration(modelConfig.getOpenIDConnectConfiguration()))
+            .build();
   }
 
   /**

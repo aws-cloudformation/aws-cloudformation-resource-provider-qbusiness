@@ -56,6 +56,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
   private static final String APP_ID = "a197dafc-2158-4f93-ab0d-b1c361c39838";
   private static final String WEB_EXPERIENCE_ID = "22222222-1596-4f1a-a3c8-e5f4b33d9fe5";
+  private static final List<String> ORIGINS_URL = List.of("https://someTestOriginUrl.com/");
 
   private AmazonWebServicesClientProxy proxy;
   private ProxyClient<QBusinessClient> proxyClient;
@@ -95,6 +96,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .subtitle("This is a subtitle of the web experience.")
         .roleArn("RoleArn")
         .identityProviderConfiguration(identityProviderConfiguration)
+        .origins(ORIGINS_URL)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -136,6 +138,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .status(WebExperienceStatus.ACTIVE)
         .roleArn("RoleArn")
         .defaultEndpoint("Endpoint")
+        .origins(ORIGINS_URL)
         .build();
 
     when(qBusinessClient.getWebExperience(any(GetWebExperienceRequest.class)))
@@ -159,6 +162,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getStatus()).isEqualTo(WebExperienceStatus.ACTIVE.toString());
     assertThat(resultModel.getRoleArn()).isEqualTo("RoleArn");
     assertThat(resultModel.getDefaultEndpoint()).isEqualTo("Endpoint");
+    assertThat(resultModel.getOrigins()).isEqualTo(ORIGINS_URL);
 
     verify(qBusinessClient).createWebExperience(any(CreateWebExperienceRequest.class));
 

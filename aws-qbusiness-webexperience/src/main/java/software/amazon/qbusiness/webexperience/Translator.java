@@ -48,6 +48,7 @@ public class Translator {
         .title(model.getTitle())
         .subtitle(model.getSubtitle())
         .welcomeMessage(model.getWelcomeMessage())
+        .origins(model.getOrigins())
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .build();
   }
@@ -101,6 +102,7 @@ public class Translator {
         .defaultEndpoint(awsResponse.defaultEndpoint())
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
+        .origins(awsResponse.origins())
         .build();
   }
 
@@ -148,6 +150,7 @@ public class Translator {
         .subtitle(model.getSubtitle())
         .roleArn(model.getRoleArn())
         .identityProviderConfiguration(toIdentityProviderConfiguration(model.getIdentityProviderConfiguration()))
+        .origins(model.getOrigins())
         .build();
   }
 

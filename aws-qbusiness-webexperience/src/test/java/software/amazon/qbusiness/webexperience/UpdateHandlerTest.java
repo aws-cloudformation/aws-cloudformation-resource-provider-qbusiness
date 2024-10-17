@@ -50,6 +50,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
   private static final String APP_ID = "a256a36f-7ae8-47c9-b794-5bb67b78a580";
   private static final String WEB_EXPERIENCE_ID = "33333333-7ae8-47c9-b794-5bb67b78a580";
+  private static final List<String> ORIGINS_URL = List.of("https://someTestOriginUrl.com/");
 
   private AmazonWebServicesClientProxy proxy;
 
@@ -108,6 +109,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
             Tag.builder().key("iwillchange").value("nowanewvalue").build(),
             Tag.builder().key("iamnew").value("overhere").build()
         ))
+        .origins(ORIGINS_URL)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -178,6 +180,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(updateAppRequest.title()).isEqualTo("This is a new title of the web experience.");
     assertThat(updateAppRequest.subtitle()).isEqualTo("This is a new subtitle of the web experience.");
     assertThat(updateAppRequest.roleArn()).isEqualTo("RoleArn");
+    assertThat(updateAppRequest.origins()).isEqualTo(ORIGINS_URL);
 
     verify(sdkClient, times(2)).getWebExperience(
         argThat((ArgumentMatcher<GetWebExperienceRequest>) t -> t.applicationId().equals(APP_ID) && t.webExperienceId().equals(WEB_EXPERIENCE_ID))

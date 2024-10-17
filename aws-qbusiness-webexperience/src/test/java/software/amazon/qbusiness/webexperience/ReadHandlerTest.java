@@ -45,6 +45,7 @@ public class ReadHandlerTest extends AbstractTestBase {
 
   private static final String APP_ID = "63451660-1596-4f1a-a3c8-e5f4b33d9fe5";
   private static final String WEB_EXPERIENCE_ID = "11111111-1596-4f1a-a3c8-e5f4b33d9fe5";
+  private static final List<String> ORIGINS_URL = List.of("https://someTestOriginUrl.com/");
 
   private AmazonWebServicesClientProxy proxy;
 
@@ -103,6 +104,7 @@ public class ReadHandlerTest extends AbstractTestBase {
             .status(WebExperienceStatus.ACTIVE)
             .roleArn("RoleArn")
             .defaultEndpoint("Endpoint")
+            .origins(ORIGINS_URL)
             .build());
     when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
         .thenReturn(ListTagsForResourceResponse.builder()

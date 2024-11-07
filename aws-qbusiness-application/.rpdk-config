@@ -26,5 +26,9 @@
         "protocolVersion": "2.0.0"
     },
     "logProcessorEnabled": "true",
-    "executableEntrypoint": "software.amazon.qbusiness.application.HandlerWrapperExecutable"
+    "executableEntrypoint": "software.amazon.qbusiness.application.HandlerWrapperExecutable",
+    "contractSettings": {
+        "MaxConcurrentTestCase": 10
+    },
+    "canarySettings": {}
 }

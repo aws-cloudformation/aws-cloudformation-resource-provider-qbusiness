@@ -59,7 +59,7 @@ public class CreateHandler extends BaseHandlerStd {
     return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
         .then(progress ->
             proxy.initiate("AWS-QBusiness-Application::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request.getClientRequestToken(), model))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request.getClientRequestToken(), model, request.getSystemTags()))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateApplication(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
@@ -73,9 +73,9 @@ public class CreateHandler extends BaseHandlerStd {
             // Immediately update the application to add auto-subscribe configuration to it.
             // TODO: Remove after AutoSubscribeConfiguration is added to the CreateApplication API.
             return proxy.initiate("AWS-QBusiness-Application::Update", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToPostCreateUpdateRequest(model))
+                .translateToServiceRequest(Translator::translateToPostCreateUpdateRequest)
                 .backoffDelay(backOffStrategy)
-                .makeServiceCall((awsRequest, clientProxyClient) -> callUpdateApplication(awsRequest, clientProxyClient))
+                .makeServiceCall(this::callUpdateApplication)
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
                 .handleError((updateReq, error, client, model, context) ->
                         handleError(updateReq, model, error, context, logger, API_UPDATE_APPLICATION))

@@ -12,8 +12,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -102,6 +104,9 @@ public class CreateHandlerTest extends AbstractTestBase {
             .build())
         .iamIdentityProviderArn("arn:aws:iam::123456:oidc-provider/trial-123456.okta.com")
         .clientIdsForOIDC(List.of("0oaglq4vdnaWau7hW697"))
+        .tags(List.of(
+            Tag.builder().key("TagA").value("ValueA").build()
+        ))
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -110,6 +115,10 @@ public class CreateHandlerTest extends AbstractTestBase {
         .awsPartition("aws")
         .region("us-east-1")
         .stackId("Stack1")
+        .systemTags(Map.of(
+            "aws:cloudformation:logical-id", "AiChatApp",
+            "aws:cloudformation:stack-name", "StackedStack"
+        ))
         .build();
 
     when(sdkClient.createApplication(any(CreateApplicationRequest.class)))
@@ -130,7 +139,15 @@ public class CreateHandlerTest extends AbstractTestBase {
   public void handleRequest_SimpleSuccess() {
     // set up scenario
     when(sdkClient.listTagsForResource(any(ListTagsForResourceRequest.class))).thenReturn(ListTagsForResourceResponse.builder()
-        .tags(List.of())
+        .tags(List.of(
+            software.amazon.awssdk.services.qbusiness.model.Tag.builder()
+                .key("aws:cloudformation:logical-id")
+                .value("AiChatApp").build(),
+            software.amazon.awssdk.services.qbusiness.model.Tag.builder()
+                .key("aws:cloudformation:stack-name")
+                .value("StackedStack").build(),
+            software.amazon.awssdk.services.qbusiness.model.Tag.builder().key("TagA").value("ValueA").build()
+        ))
         .build());
     when(sdkClient.getApplication(any(GetApplicationRequest.class)))
         .thenReturn(GetApplicationResponse.builder()
@@ -155,7 +172,22 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(model.getDescription()).isEqualTo(createModel.getDescription());
     assertThat(model.getStatus()).isEqualTo(ApplicationStatus.ACTIVE.toString());
 
-    verify(sdkClient).createApplication(any(CreateApplicationRequest.class));
+    ArgumentCaptor<CreateApplicationRequest> createAppReqCaptor = ArgumentCaptor.forClass(CreateApplicationRequest.class);
+    verify(sdkClient).createApplication(createAppReqCaptor.capture());
+
+    var sdkRequest = createAppReqCaptor.getValue();
+    assertThat(sdkRequest.displayName()).isEqualTo("TheMeta");
+
+    var expectedTagsAsMap = Map.of(
+        "aws:cloudformation:logical-id", "AiChatApp",
+        "aws:cloudformation:stack-name", "StackedStack",
+        "TagA", "ValueA"
+    );
+    Map<String, String> requestTags = sdkRequest.tags().stream().collect(Collectors.toMap(
+        software.amazon.awssdk.services.qbusiness.model.Tag::key,
+        software.amazon.awssdk.services.qbusiness.model.Tag::value));
+    assertThat(requestTags).isEqualTo(expectedTagsAsMap);
+
     verify(sdkClient, times(3)).getApplication(
         argThat((ArgumentMatcher<GetApplicationRequest>) t -> t.applicationId().equals(APP_ID))
     );

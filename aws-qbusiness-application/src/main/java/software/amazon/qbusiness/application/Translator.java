@@ -38,7 +38,10 @@ public class Translator {
    * @param model resource model
    * @return awsRequest the aws service request to create a resource
    */
-  static CreateApplicationRequest translateToCreateRequest(final String idempotentToken, final ResourceModel model) {
+  static CreateApplicationRequest translateToCreateRequest(
+      final String idempotentToken,
+      final ResourceModel model,
+      final Map<String, String> systemTags) {
     return CreateApplicationRequest.builder()
         .clientToken(idempotentToken)
         .displayName(model.getDisplayName())
@@ -50,7 +53,7 @@ public class Translator {
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
-        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags(), systemTags))
         .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
         .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
         .build();

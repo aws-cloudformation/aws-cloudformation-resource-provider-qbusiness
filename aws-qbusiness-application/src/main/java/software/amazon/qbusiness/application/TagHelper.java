@@ -1,5 +1,6 @@
 package software.amazon.qbusiness.application;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,17 +75,35 @@ public class TagHelper {
   }
 
   public static List<Tag> serviceTagsFromCfnTags(
-      Collection<software.amazon.qbusiness.application.Tag> modelTags
+      Collection<software.amazon.qbusiness.application.Tag> modelTags,
+      Map<String, String> systemTags
   ) {
-    if (modelTags == null) {
+    if (modelTags == null && systemTags == null) {
       return null;
     }
-    return modelTags.stream()
-        .map(tag -> Tag.builder()
-            .key(tag.getKey())
-            .value(tag.getValue())
-            .build()
-        ).toList();
+
+    var tags = new ArrayList<Tag>();
+    if (modelTags != null) {
+      for (software.amazon.qbusiness.application.Tag modelTag : modelTags) {
+        tags.add(
+            Tag.builder()
+                .key(modelTag.getKey())
+                .value(modelTag.getValue())
+                .build()
+        );
+      }
+    }
+
+    if (systemTags != null) {
+      for (Map.Entry<String, String> systemTag: systemTags.entrySet()) {
+        tags.add(Tag.builder()
+            .key(systemTag.getKey())
+            .value(systemTag.getValue()).build()
+        );
+      }
+    }
+
+    return tags;
   }
 
   /**

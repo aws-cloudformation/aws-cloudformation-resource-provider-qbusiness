@@ -20,8 +20,9 @@ import software.amazon.awssdk.services.qbusiness.model.Tag;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationRequest;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.qbusiness.common.TagUtils;
 
 /**
  * This class is a centralized placeholder for
@@ -35,15 +36,26 @@ public class Translator {
   /**
    * Request to create a resource
    *
-   * @param model resource model
+   * @param model  resource model
+   * @param logger
    * @return awsRequest the aws service request to create a resource
    */
   static CreateApplicationRequest translateToCreateRequest(
-      final String idempotentToken,
+//      final String idempotentToken,
+      final ResourceHandlerRequest<ResourceModel> request,
       final ResourceModel model,
-      final Map<String, String> systemTags) {
+      //      final Map<String, String> resourceTags,
+//      final Map<String, String> systemTags
+      Logger logger) {
+    var modelTags = TagHelper.convertToMap(model.getTags());
+    var merged = TagUtils.mergeCreateHandlerTagsToSdkTags(modelTags, request);
+    StringBuilder b = new StringBuilder();
+    for (var tag : merged) {
+      b.append("%s:%s\n".formatted(tag.key(), tag.value()));
+    }
+    logger.log("Here are the tags: %s".formatted(b.toString()));
     return CreateApplicationRequest.builder()
-        .clientToken(idempotentToken)
+        .clientToken(request.getClientRequestToken())
         .displayName(model.getDisplayName())
         .roleArn(model.getRoleArn())
         .identityType(model.getIdentityType())
@@ -53,7 +65,7 @@ public class Translator {
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
-        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags(), systemTags))
+        .tags(merged)
         .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
         .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
         .build();

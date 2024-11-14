@@ -59,7 +59,7 @@ public class CreateHandler extends BaseHandlerStd {
     return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
         .then(progress ->
             proxy.initiate("AWS-QBusiness-Application::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request.getClientRequestToken(), model, request.getSystemTags()))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request, model, logger))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateApplication(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))

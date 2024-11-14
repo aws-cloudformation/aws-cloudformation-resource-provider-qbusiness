@@ -1,7 +1,7 @@
 package software.amazon.qbusiness.application;
 
-import static software.amazon.qbusiness.application.Constants.ENV_AWS_REGION;
-import static software.amazon.qbusiness.application.Constants.SERVICE_NAME_LOWER;
+import static software.amazon.qbusiness.common.SharedConstants.ENV_AWS_REGION;
+import static software.amazon.qbusiness.common.SharedConstants.SERVICE_NAME_LOWER;
 
 import java.net.URI;
 

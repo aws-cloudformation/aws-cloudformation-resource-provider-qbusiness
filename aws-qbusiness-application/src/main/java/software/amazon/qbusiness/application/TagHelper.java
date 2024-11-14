@@ -75,16 +75,16 @@ public class TagHelper {
   }
 
   public static List<Tag> serviceTagsFromCfnTags(
-      Collection<software.amazon.qbusiness.application.Tag> modelTags,
+      Map<String, String> resourceTags,
       Map<String, String> systemTags
   ) {
-    if (modelTags == null && systemTags == null) {
-      return null;
+    if (resourceTags == null && systemTags == null) {
+      return List.of();
     }
 
     var tags = new ArrayList<Tag>();
-    if (modelTags != null) {
-      for (software.amazon.qbusiness.application.Tag modelTag : modelTags) {
+    if (resourceTags != null) {
+      for (Map.Entry<String, String> modelTag: resourceTags.entrySet()) {
         tags.add(
             Tag.builder()
                 .key(modelTag.getKey())

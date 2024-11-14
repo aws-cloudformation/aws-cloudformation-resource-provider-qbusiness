@@ -22,6 +22,7 @@ public class Utils {
     var applicationId = model.getApplicationId();
     return buildApplicationArn(partition, region, accountId, applicationId);
   }
+
   private static String buildApplicationArn(
       @NonNull String partition,
       @NonNull String region,

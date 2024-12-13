@@ -23,6 +23,7 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
+import software.amazon.qbusiness.common.TagUtils;
 
 public class UpdateHandler extends BaseHandlerStd {
 
@@ -32,16 +33,14 @@ public class UpdateHandler extends BaseHandlerStd {
       .build();
 
   private final Constant backOffStrategy;
-  private final TagHelper tagHelper;
   private Logger logger;
 
   public UpdateHandler() {
-    this(DEFAULT_BACK_OFF_STRATEGY, new TagHelper());
+    this(DEFAULT_BACK_OFF_STRATEGY);
   }
 
-  public UpdateHandler(Constant backOffStrategy, TagHelper tagHelper) {
+  public UpdateHandler(Constant backOffStrategy) {
     this.backOffStrategy = backOffStrategy;
-    this.tagHelper = tagHelper;
   }
 
   protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -72,14 +71,19 @@ public class UpdateHandler extends BaseHandlerStd {
                 .progress()
         )
         .then(progress -> {
-          if (!tagHelper.shouldUpdateTags(request)) {
+          var previousTags = TagUtils.getPreviouslyAttachedTags(
+              Translator.cfnTagsToGenericMap(request.getPreviousResourceState().getTags()), request);
+          var desiredTags = TagUtils.getNewDesiredTags(
+              Translator.cfnTagsToGenericMap(request.getDesiredResourceState().getTags()), request);
+
+          if (!TagUtils.shouldUpdateTags(previousTags, desiredTags)) {
             // No updates to tags needed, return early with get application. Since ReadHandler will return Done, this will be the last step
             return readHandler(proxy, request, callbackContext, proxyClient, logger);
           }
 
-          Map<String, String> tagsToAdd = tagHelper.generateTagsToAdd(
-              tagHelper.getPreviouslyAttachedTags(request),
-              tagHelper.getNewDesiredTags(request)
+          Map<String, String> tagsToAdd = TagUtils.generateTagsToAdd(
+              previousTags,
+              desiredTags
           );
 
           if (tagsToAdd == null || tagsToAdd.isEmpty()) {
@@ -92,9 +96,9 @@ public class UpdateHandler extends BaseHandlerStd {
               .progress();
         })
         .then(progress -> {
-          Set<String> tagsToRemove = tagHelper.generateTagsToRemove(
-              tagHelper.getPreviouslyAttachedTags(request),
-              tagHelper.getNewDesiredTags(request)
+          Set<String> tagsToRemove = TagUtils.generateTagsToRemove(
+              TagUtils.getPreviouslyAttachedTags(Translator.cfnTagsToGenericMap(request.getPreviousResourceState().getTags()), request),
+              TagUtils.getNewDesiredTags(Translator.cfnTagsToGenericMap(request.getDesiredResourceState().getTags()), request)
           );
 
           if (CollectionUtils.isEmpty(tagsToRemove)) {

@@ -43,6 +43,8 @@ Resources:
                 - "qbusiness:TagResource"
                 - "qbusiness:UntagResource"
                 - "qbusiness:UpdateApplication"
+                - "quicksight:DescribeAccountSubscription"
+                - "quicksight:ListNamespaces"
                 - "sso:CreateApplication"
                 - "sso:DeleteApplication"
                 - "sso:DescribeInstance"

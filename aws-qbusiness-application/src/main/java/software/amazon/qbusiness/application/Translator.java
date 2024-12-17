@@ -61,6 +61,7 @@ public class Translator {
         .tags(merged)
         .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
         .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
+        .quickSightConfiguration(toQuickSightConfiguration(model.getQuickSightConfiguration()))
         .build();
   }
 
@@ -109,6 +110,7 @@ public class Translator {
         .qAppsConfiguration(fromServiceQAppsConfiguration(awsResponse.qAppsConfiguration()))
         .personalizationConfiguration(fromServicePersonalizationConfiguration(awsResponse.personalizationConfiguration()))
         .autoSubscriptionConfiguration(fromServiceAutoSubscriptionConfiguration(awsResponse.autoSubscriptionConfiguration()))
+        .quickSightConfiguration(fromQuickSightConfiguration(awsResponse.quickSightConfiguration()))
         .build();
     // TODO: Workaround. This is a readonly field. But it is only returned if customer is using IDC
     // When that's not the case, let's fill it in with N/A
@@ -219,6 +221,30 @@ public class Translator {
     return software.amazon.awssdk.services.qbusiness.model.PersonalizationConfiguration.builder()
         .personalizationControlMode(modelConfig.getPersonalizationControlMode())
         .build();
+  }
+
+  static QuickSightConfiguration fromQuickSightConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.QuickSightConfiguration quickSightConfiguration
+  ) {
+    if (quickSightConfiguration == null) {
+      return null;
+    }
+
+    return QuickSightConfiguration.builder()
+            .clientNamespace(quickSightConfiguration.clientNamespace())
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.QuickSightConfiguration toQuickSightConfiguration(
+          QuickSightConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.QuickSightConfiguration.builder()
+            .clientNamespace(modelConfig.getClientNamespace())
+            .build();
   }
 
   static AutoSubscriptionConfiguration fromServiceAutoSubscriptionConfiguration(
@@ -350,6 +376,7 @@ public class Translator {
             .updatedAt(instantToString(application.updatedAt()))
             .status(application.statusAsString())
             .identityType(application.identityTypeAsString())
+            .quickSightConfiguration(fromQuickSightConfiguration(application.quickSightConfiguration()))
             .build()
         )
         .toList();

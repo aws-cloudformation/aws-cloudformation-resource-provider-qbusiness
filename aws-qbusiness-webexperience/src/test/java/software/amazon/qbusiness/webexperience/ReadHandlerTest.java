@@ -46,6 +46,11 @@ public class ReadHandlerTest extends AbstractTestBase {
   private static final String APP_ID = "63451660-1596-4f1a-a3c8-e5f4b33d9fe5";
   private static final String WEB_EXPERIENCE_ID = "11111111-1596-4f1a-a3c8-e5f4b33d9fe5";
   private static final List<String> ORIGINS_URL = List.of("https://someTestOriginUrl.com/");
+  private static final String CUSTOM_CSS_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.css";
+  private static final String LOGO_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.png";
+  private static final String FONT_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.otf";
+  private static final String FAVICON_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.ico";
+  private software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration customizationConfiguration;
 
   private AmazonWebServicesClientProxy proxy;
 
@@ -80,6 +85,13 @@ public class ReadHandlerTest extends AbstractTestBase {
         .region("us-east-1")
         .stackId("Stack1")
         .build();
+
+    customizationConfiguration = software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration.builder()
+        .customCSSUrl(CUSTOM_CSS_URL)
+        .logoUrl(LOGO_URL)
+        .fontUrl(FONT_URL)
+        .faviconUrl(FAVICON_URL)
+        .build();
   }
 
   @AfterEach
@@ -105,6 +117,7 @@ public class ReadHandlerTest extends AbstractTestBase {
             .roleArn("RoleArn")
             .defaultEndpoint("Endpoint")
             .origins(ORIGINS_URL)
+            .customizationConfiguration(customizationConfiguration)
             .build());
     when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
         .thenReturn(ListTagsForResourceResponse.builder()
@@ -138,6 +151,13 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getStatus()).isEqualTo(WebExperienceStatus.ACTIVE.toString());
     assertThat(resultModel.getRoleArn()).isEqualTo("RoleArn");
     assertThat(resultModel.getDefaultEndpoint()).isEqualTo("Endpoint");
+    assertThat(resultModel.getOrigins()).isEqualTo(ORIGINS_URL);
+    assertThat(resultModel.getCustomizationConfiguration()).isEqualTo(CustomizationConfiguration.builder()
+        .customCSSUrl(CUSTOM_CSS_URL)
+        .logoUrl(LOGO_URL)
+        .fontUrl(FONT_URL)
+        .faviconUrl(FAVICON_URL)
+        .build());
 
     var tags = resultModel.getTags().stream().map(tag -> Map.entry(tag.getKey(), tag.getValue())).toList();
     assertThat(tags).isEqualTo(List.of(

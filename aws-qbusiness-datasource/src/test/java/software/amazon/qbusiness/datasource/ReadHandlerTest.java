@@ -39,11 +39,13 @@ import software.amazon.awssdk.services.qbusiness.model.DocumentEnrichmentConfigu
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
+import software.amazon.awssdk.services.qbusiness.model.ImageExtractionConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.HookConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.InlineDocumentEnrichmentConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
+import software.amazon.awssdk.services.qbusiness.model.MediaExtractionConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.qbusiness.model.ThrottlingException;
 import software.amazon.awssdk.services.qbusiness.model.ValidationException;
@@ -127,6 +129,9 @@ public class ReadHandlerTest extends AbstractTestBase {
                         "Hello", Document.fromString("World")))
                 )))
             )
+            .mediaExtractionConfiguration(MediaExtractionConfiguration.builder()
+                        .imageExtractionConfiguration(ImageExtractionConfiguration.builder().imageExtractionStatus("ENABLED").build())
+                        .build())
             .documentEnrichmentConfiguration(DocumentEnrichmentConfiguration.builder()
                 .inlineConfigurations(InlineDocumentEnrichmentConfiguration.builder()
                     .target(DocumentAttributeTarget.builder()

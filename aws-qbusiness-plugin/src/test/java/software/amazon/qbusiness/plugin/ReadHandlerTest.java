@@ -55,6 +55,8 @@ public class ReadHandlerTest extends AbstractTestBase {
   private static final String AWS_PARTITION = "aws";
   private static final String ACCOUNT_ID = "123456789012";
   private static final String REGION = "us-west-2";
+  private static final String AUTH_URL = "https://myDomainName.my.salesforce.com/services/oauth2/authorize";
+  private static final String TOKEN_URL = "https://login.salesforce.com/services/oauth2/token";
 
   private AmazonWebServicesClientProxy proxy;
 
@@ -171,6 +173,90 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getState()).isEqualTo(PLUGIN_STATE);
     assertThat(resultModel.getDisplayName()).isEqualTo(PLUGIN_NAME);
     assertThat(resultModel.getAuthConfiguration()).isEqualTo(serviceAuthConfiguration);
+    assertThat(resultModel.getCreatedAt()).isEqualTo(Instant.ofEpochMilli(CREATED_TIME).toString());
+    assertThat(resultModel.getUpdatedAt()).isEqualTo(Instant.ofEpochMilli(UPDATED_TIME).toString());
+  }
+
+
+  public void handleRequest_withOauthConfig_SimpleSuccess() {
+    final PluginAuthConfiguration oauthConfig = PluginAuthConfiguration.builder()
+        .oAuth2ClientCredentialConfiguration(OAuth2ClientCredentialConfiguration.builder()
+            .roleArn(ROLE_ARN)
+            .secretArn(SECRET_ARN)
+            .authorizationUrl(AUTH_URL)
+            .tokenUrl(TOKEN_URL)
+            .build())
+        .build();
+
+    final ResourceModel oauthModel = ResourceModel.builder()
+        .applicationId(APPLICATION_ID)
+        .pluginId(PLUGIN_ID)
+        .displayName(PLUGIN_NAME)
+        .type(PLUGIN_TYPE)
+        .state(PLUGIN_STATE)
+        .serverUrl(SERVER_URL)
+        .pluginArn("a-plugin-arn")
+        .authConfiguration(oauthConfig)
+        .createdAt(Instant.ofEpochMilli(CREATED_TIME).toString())
+        .updatedAt(Instant.ofEpochMilli(UPDATED_TIME).toString())
+        .tags(List.of(Tag.builder()
+            .key("Tag 1")
+            .value("Tag 2")
+            .build()))
+        .build();
+
+    final ResourceHandlerRequest<ResourceModel> oauthRequest = ResourceHandlerRequest.<ResourceModel>builder()
+        .awsPartition(AWS_PARTITION)
+        .region(REGION)
+        .awsAccountId(ACCOUNT_ID)
+        .desiredResourceState(oauthModel)
+        .clientRequestToken(CLIENT_TOKEN)
+        .build();
+
+    when(proxyClient.client().getPlugin(any(GetPluginRequest.class)))
+        .thenReturn(GetPluginResponse.builder()
+            .applicationId(APPLICATION_ID)
+            .pluginId(PLUGIN_ID)
+            .displayName(PLUGIN_NAME)
+            .type(PLUGIN_TYPE)
+            .state(PLUGIN_STATE)
+            .serverUrl(SERVER_URL)
+            .authConfiguration(cfnAuthConfiguration)
+            .createdAt(Instant.ofEpochMilli(CREATED_TIME))
+            .updatedAt(Instant.ofEpochMilli(UPDATED_TIME))
+            .pluginArn("a-plugin-arn")
+            .build());
+
+    when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
+            .thenReturn(ListTagsForResourceResponse.builder()
+                    .tags(List.of(software.amazon.awssdk.services.qbusiness.model.Tag.builder()
+                            .key("Tag 1")
+                            .value("Tag 2")
+                            .build()))
+                    .build());
+
+    final ProgressEvent<ResourceModel, CallbackContext> response = underTest.handleRequest(proxy, oauthRequest, new CallbackContext(), proxyClient,
+            logger);
+
+    verify(qBusinessClient).getPlugin(any(GetPluginRequest.class));
+    verify(qBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
+
+    assertThat(response).isNotNull();
+    assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+    assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+    assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+    assertThat(response.getResourceModels()).isNull();
+    assertThat(response.getMessage()).isNull();
+    assertThat(response.getErrorCode()).isNull();
+
+    ResourceModel resultModel = response.getResourceModel();
+
+    assertThat(resultModel.getApplicationId()).isEqualTo(APPLICATION_ID);
+    assertThat(resultModel.getPluginId()).isEqualTo(PLUGIN_ID);
+    assertThat(resultModel.getType()).isEqualTo(PLUGIN_TYPE);
+    assertThat(resultModel.getState()).isEqualTo(PLUGIN_STATE);
+    assertThat(resultModel.getDisplayName()).isEqualTo(PLUGIN_NAME);
+    assertThat(resultModel.getAuthConfiguration()).isEqualTo(oauthConfig);
     assertThat(resultModel.getCreatedAt()).isEqualTo(Instant.ofEpochMilli(CREATED_TIME).toString());
     assertThat(resultModel.getUpdatedAt()).isEqualTo(Instant.ofEpochMilli(UPDATED_TIME).toString());
   }

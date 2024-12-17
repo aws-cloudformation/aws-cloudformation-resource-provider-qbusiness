@@ -50,6 +50,7 @@ public class Translator {
         .welcomeMessage(model.getWelcomeMessage())
         .origins(model.getOrigins())
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .customizationConfiguration(toCustomizationConfiguration(model.getCustomizationConfiguration()))
         .build();
   }
 
@@ -103,6 +104,7 @@ public class Translator {
         .createdAt(instantToString(awsResponse.createdAt()))
         .updatedAt(instantToString(awsResponse.updatedAt()))
         .origins(awsResponse.origins())
+        .customizationConfiguration(fromCustomizationConfiguration(awsResponse.customizationConfiguration()))
         .build();
   }
 
@@ -151,6 +153,7 @@ public class Translator {
         .roleArn(model.getRoleArn())
         .identityProviderConfiguration(toIdentityProviderConfiguration(model.getIdentityProviderConfiguration()))
         .origins(model.getOrigins())
+        .customizationConfiguration(toCustomizationConfiguration(model.getCustomizationConfiguration()))
         .build();
   }
 
@@ -192,6 +195,21 @@ public class Translator {
             .build();
   }
 
+  static CustomizationConfiguration fromCustomizationConfiguration(
+      software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return CustomizationConfiguration.builder()
+            .customCSSUrl(serviceConfig.customCSSUrl())
+            .logoUrl(serviceConfig.logoUrl())
+            .fontUrl(serviceConfig.fontUrl())
+            .faviconUrl(serviceConfig.faviconUrl())
+            .build();
+  }
+
   static software.amazon.awssdk.services.qbusiness.model.OpenIDConnectProviderConfiguration toOpenIDConnectProviderConfiguration(
           OpenIDConnectProviderConfiguration modelConfig
   ) {
@@ -228,6 +246,21 @@ public class Translator {
     return software.amazon.awssdk.services.qbusiness.model.IdentityProviderConfiguration.builder()
             .samlConfiguration(toSamlProviderConfiguration(modelConfig.getSamlConfiguration()))
             .openIDConnectConfiguration(toOpenIDConnectProviderConfiguration(modelConfig.getOpenIDConnectConfiguration()))
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration toCustomizationConfiguration(
+      CustomizationConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration.builder()
+            .customCSSUrl(modelConfig.getCustomCSSUrl())
+            .logoUrl(modelConfig.getLogoUrl())
+            .fontUrl(modelConfig.getFontUrl())
+            .faviconUrl(modelConfig.getFaviconUrl())
             .build();
   }
 

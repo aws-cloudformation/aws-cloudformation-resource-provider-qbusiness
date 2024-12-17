@@ -85,7 +85,8 @@ private final TagHelper tagHelper;
 
               return proxy.initiate("AWS-QBusiness-Plugin::TagResource", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
                   .translateToServiceRequest(model -> {
-                    return Translator.tagResourceRequest(request, tagsToAdd);
+                    logger.log("Calling tag resource for plugin:%s in app: %s".formatted(model.getPluginId(), model.getApplicationId()));
+                    return Translator.tagResourceRequest(request, model, tagsToAdd);
                   })
                   .makeServiceCall(this::callTagResource)
                   .progress();
@@ -101,7 +102,7 @@ private final TagHelper tagHelper;
               }
 
           return proxy.initiate("AWS-QBusiness-Application::UnTagResource", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-              .translateToServiceRequest(model -> Translator.untagResourceRequest(request, tagsToRemove))
+              .translateToServiceRequest(model -> Translator.untagResourceRequest(request, model, tagsToRemove))
               .makeServiceCall(this::callUntagResource)
               .progress();
         })

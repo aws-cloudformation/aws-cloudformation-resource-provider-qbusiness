@@ -124,6 +124,11 @@ public class CreateHandlerTest extends AbstractTestBase {
                 )
                 .build())
             .build())
+        .mediaExtractionConfiguration(MediaExtractionConfiguration.builder()
+                .imageExtractionConfiguration(
+                        ImageExtractionConfiguration.builder()
+                                .imageExtractionStatus("ENABLED").build())
+            .build())
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()

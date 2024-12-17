@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -57,6 +56,10 @@ public class CreateHandlerTest extends AbstractTestBase {
   private static final String APP_ID = "a197dafc-2158-4f93-ab0d-b1c361c39838";
   private static final String WEB_EXPERIENCE_ID = "22222222-1596-4f1a-a3c8-e5f4b33d9fe5";
   private static final List<String> ORIGINS_URL = List.of("https://someTestOriginUrl.com/");
+  private static final String CUSTOM_CSS_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.css";
+  private static final String LOGO_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.png";
+  private static final String FONT_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.otf";
+  private static final String FAVICON_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.ico";
 
   private AmazonWebServicesClientProxy proxy;
   private ProxyClient<QBusinessClient> proxyClient;
@@ -67,6 +70,7 @@ public class CreateHandlerTest extends AbstractTestBase {
   private Constant testBackOff;
   private CreateHandler underTest;
   private IdentityProviderConfiguration identityProviderConfiguration;
+  private CustomizationConfiguration customizationConfiguration;
 
   private AutoCloseable testMocks;
 
@@ -90,6 +94,13 @@ public class CreateHandlerTest extends AbstractTestBase {
             .samlConfiguration(SamlProviderConfiguration.builder().authenticationUrl("https://someTestAuthenticationUrl").build())
             .build();
 
+    customizationConfiguration = CustomizationConfiguration.builder()
+            .customCSSUrl(CUSTOM_CSS_URL)
+            .logoUrl(LOGO_URL)
+            .fontUrl(FONT_URL)
+            .faviconUrl(FAVICON_URL)
+            .build();
+
     createModel = ResourceModel.builder()
         .applicationId(APP_ID)
         .title("This is a title of the web experience.")
@@ -97,6 +108,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .roleArn("RoleArn")
         .identityProviderConfiguration(identityProviderConfiguration)
         .origins(ORIGINS_URL)
+        .customizationConfiguration(customizationConfiguration)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -139,6 +151,12 @@ public class CreateHandlerTest extends AbstractTestBase {
         .roleArn("RoleArn")
         .defaultEndpoint("Endpoint")
         .origins(ORIGINS_URL)
+        .customizationConfiguration(software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration.builder()
+            .customCSSUrl(CUSTOM_CSS_URL)
+            .logoUrl(LOGO_URL)
+            .fontUrl(FONT_URL)
+            .faviconUrl(FAVICON_URL)
+            .build())
         .build();
 
     when(qBusinessClient.getWebExperience(any(GetWebExperienceRequest.class)))
@@ -163,6 +181,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getRoleArn()).isEqualTo("RoleArn");
     assertThat(resultModel.getDefaultEndpoint()).isEqualTo("Endpoint");
     assertThat(resultModel.getOrigins()).isEqualTo(ORIGINS_URL);
+    assertThat(resultModel.getCustomizationConfiguration()).isEqualTo(customizationConfiguration);
 
     verify(qBusinessClient).createWebExperience(any(CreateWebExperienceRequest.class));
 

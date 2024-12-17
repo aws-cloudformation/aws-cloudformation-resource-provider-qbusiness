@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.qbusiness.model.AppliedAttachmentsConfigu
 import software.amazon.awssdk.services.qbusiness.model.AttachmentsControlMode;
 import software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.AutoSubscriptionStatus;
+import software.amazon.awssdk.services.qbusiness.model.QuickSightConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.SubscriptionType;
 import software.amazon.awssdk.services.qbusiness.model.EncryptionConfiguration;
 import software.amazon.awssdk.services.qbusiness.model.QBusinessException;
@@ -124,6 +125,9 @@ public class ReadHandlerTest extends AbstractTestBase {
                 .autoSubscribe(AutoSubscriptionStatus.ENABLED.toString())
                 .defaultSubscriptionType(SubscriptionType.Q_BUSINESS.toString())
                 .build())
+            .quickSightConfiguration(QuickSightConfiguration.builder()
+                .clientNamespace("client-namespace")
+                .build())
             .build());
     when(proxyClient.client().listTagsForResource(any(ListTagsForResourceRequest.class)))
         .thenReturn(ListTagsForResourceResponse.builder()
@@ -161,6 +165,7 @@ public class ReadHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getAttachmentsConfiguration().getAttachmentsControlMode()).isEqualTo(AttachmentsControlMode.ENABLED.toString());
     assertThat(resultModel.getAutoSubscriptionConfiguration().getAutoSubscribe()).isEqualTo(AutoSubscriptionStatus.ENABLED.toString());
     assertThat(resultModel.getAutoSubscriptionConfiguration().getDefaultSubscriptionType()).isEqualTo(SubscriptionType.Q_BUSINESS.toString());
+    assertThat(resultModel.getQuickSightConfiguration().getClientNamespace()).isEqualTo("client-namespace");
 
 
     var tags = resultModel.getTags().stream().map(tag -> Map.entry(tag.getKey(), tag.getValue())).toList();

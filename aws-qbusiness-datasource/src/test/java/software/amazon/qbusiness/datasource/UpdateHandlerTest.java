@@ -35,6 +35,7 @@ import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
 import software.amazon.awssdk.services.qbusiness.model.DocumentContentOperator;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
+import software.amazon.awssdk.services.qbusiness.model.ImageExtractionStatus;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
@@ -146,6 +147,10 @@ public class UpdateHandlerTest extends AbstractTestBase {
             ))
             .build()
         )
+        .mediaExtractionConfiguration(MediaExtractionConfiguration.builder()
+                .imageExtractionConfiguration(ImageExtractionConfiguration.builder()
+                        .imageExtractionStatus("ENABLED").build())
+                    .build())
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -228,6 +233,10 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
     var updateInlineConf = updateReqArgument.documentEnrichmentConfiguration().inlineConfigurations().get(0);
     assertThat(updateInlineConf.documentContentOperator()).isEqualTo(DocumentContentOperator.DELETE);
+
+    var updateImageExtractionConfig = updateReqArgument.mediaExtractionConfiguration()
+            .imageExtractionConfiguration();
+    assertThat(updateImageExtractionConfig.imageExtractionStatus()).isEqualTo(ImageExtractionStatus.ENABLED);
 
     var tagResourceRequest = tagReqCaptor.getValue();
     Map<String, String> tagsInTagResourceReq = tagResourceRequest.tags().stream()

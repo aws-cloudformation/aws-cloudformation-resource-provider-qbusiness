@@ -72,6 +72,8 @@ public class AuthConfigHelper {
     return OAuth2ClientCredentialConfiguration.builder()
         .roleArn(serviceOath.roleArn())
         .secretArn(serviceOath.secretArn())
+        .tokenUrl(serviceOath.tokenUrl())
+        .authorizationUrl(serviceOath.authorizationUrl())
         .build();
   }
 
@@ -96,6 +98,8 @@ public class AuthConfigHelper {
     return software.amazon.awssdk.services.qbusiness.model.OAuth2ClientCredentialConfiguration.builder()
         .roleArn(cfnOath.getRoleArn())
         .secretArn(cfnOath.getSecretArn())
+        .tokenUrl(cfnOath.getTokenUrl())
+        .authorizationUrl(cfnOath.getAuthorizationUrl())
         .build();
   }
 

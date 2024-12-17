@@ -51,10 +51,15 @@ public class UpdateHandlerTest extends AbstractTestBase {
   private static final String APP_ID = "a256a36f-7ae8-47c9-b794-5bb67b78a580";
   private static final String WEB_EXPERIENCE_ID = "33333333-7ae8-47c9-b794-5bb67b78a580";
   private static final List<String> ORIGINS_URL = List.of("https://someTestOriginUrl.com/");
+  private static final String CUSTOM_CSS_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.css";
+  private static final String LOGO_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.png";
+  private static final String FONT_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.otf";
+  private static final String FAVICON_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.ico";
 
   private AmazonWebServicesClientProxy proxy;
 
   private ProxyClient<QBusinessClient> proxyClient;
+  private CustomizationConfiguration customizationConfiguration;
 
   @Mock
   private QBusinessClient sdkClient;
@@ -80,6 +85,13 @@ public class UpdateHandlerTest extends AbstractTestBase {
     tagHelper = spy(new TagHelper());
 
     underTest = new UpdateHandler(backOffStrategy, tagHelper);
+
+    customizationConfiguration = CustomizationConfiguration.builder()
+        .customCSSUrl(CUSTOM_CSS_URL)
+        .logoUrl(LOGO_URL)
+        .fontUrl(FONT_URL)
+        .faviconUrl(FAVICON_URL)
+        .build();
 
     previousModel = ResourceModel.builder()
         .applicationId(APP_ID)
@@ -110,6 +122,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
             Tag.builder().key("iamnew").value("overhere").build()
         ))
         .origins(ORIGINS_URL)
+        .customizationConfiguration(customizationConfiguration)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -181,6 +194,12 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(updateAppRequest.subtitle()).isEqualTo("This is a new subtitle of the web experience.");
     assertThat(updateAppRequest.roleArn()).isEqualTo("RoleArn");
     assertThat(updateAppRequest.origins()).isEqualTo(ORIGINS_URL);
+    assertThat(updateAppRequest.customizationConfiguration()).isEqualTo(software.amazon.awssdk.services.qbusiness.model.CustomizationConfiguration.builder()
+        .customCSSUrl(CUSTOM_CSS_URL)
+        .logoUrl(LOGO_URL)
+        .fontUrl(FONT_URL)
+        .faviconUrl(FAVICON_URL)
+        .build());
 
     verify(sdkClient, times(2)).getWebExperience(
         argThat((ArgumentMatcher<GetWebExperienceRequest>) t -> t.applicationId().equals(APP_ID) && t.webExperienceId().equals(WEB_EXPERIENCE_ID))

@@ -4,6 +4,8 @@ import static software.amazon.qbusiness.datasource.translators.DocumentConverter
 import static software.amazon.qbusiness.datasource.translators.DocumentConverter.convertToMapToDocument;
 import static software.amazon.qbusiness.datasource.translators.DocumentEnrichmentTranslator.fromServiceDocEnrichmentConf;
 import static software.amazon.qbusiness.datasource.translators.DocumentEnrichmentTranslator.toServiceDocEnrichmentConf;
+import static software.amazon.qbusiness.datasource.translators.MediaExtractionConfigurationTranslator.fromServiceMediaExtractionConfiguration;
+import static software.amazon.qbusiness.datasource.translators.MediaExtractionConfigurationTranslator.toServiceMediaExtractionConfiguration;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -49,6 +51,7 @@ public class Translator {
         .vpcConfiguration(toServiceDataSourceVpcConfiguration(model.getVpcConfiguration()))
         .configuration(convertToMapToDocument(model.getConfiguration()))
         .documentEnrichmentConfiguration(toServiceDocEnrichmentConf(model.getDocumentEnrichmentConfiguration()))
+        .mediaExtractionConfiguration(toServiceMediaExtractionConfiguration(model.getMediaExtractionConfiguration()))
         .build();
   }
 
@@ -89,6 +92,7 @@ public class Translator {
         .vpcConfiguration(fromServiceDataSourceVpcConfiguration(awsResponse.vpcConfiguration()))
         .configuration(convertDocumentToMap(awsResponse.configuration()))
         .documentEnrichmentConfiguration(fromServiceDocEnrichmentConf(awsResponse.documentEnrichmentConfiguration()))
+        .mediaExtractionConfiguration(fromServiceMediaExtractionConfiguration(awsResponse.mediaExtractionConfiguration()))
         .build();
   }
 
@@ -171,6 +175,7 @@ public class Translator {
         .vpcConfiguration(toServiceDataSourceVpcConfiguration(model.getVpcConfiguration()))
         .configuration(convertToMapToDocument(model.getConfiguration()))
         .documentEnrichmentConfiguration(toServiceDocEnrichmentConf(model.getDocumentEnrichmentConfiguration()))
+        .mediaExtractionConfiguration(toServiceMediaExtractionConfiguration(model.getMediaExtractionConfiguration()))
         .build();
   }
 

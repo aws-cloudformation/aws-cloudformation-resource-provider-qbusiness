@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableList;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeletePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetPluginRequest;
@@ -166,8 +167,9 @@ public class Translator {
    */
   static TagResourceRequest tagResourceRequest(
       final ResourceHandlerRequest<ResourceModel> request,
+      final ResourceModel model,
       final Map<String, String> addedTags) {
-    var pluginArn = request.getDesiredResourceState().getPluginArn();
+    var pluginArn = Utils.buildPluginArn(request, model);
 
     List<software.amazon.awssdk.services.qbusiness.model.Tag> toTags = Optional.ofNullable(addedTags)
         .map(Map::entrySet)
@@ -195,8 +197,9 @@ public class Translator {
    */
   static UntagResourceRequest untagResourceRequest(
       final ResourceHandlerRequest<ResourceModel> request,
+      final ResourceModel model,
       final Set<String> removedTags) {
-    var pluginArn = request.getDesiredResourceState().getPluginArn();
+    var pluginArn = Utils.buildPluginArn(request, model);
     var tagsToRemove = Optional.ofNullable(removedTags)
         .filter(set -> !set.isEmpty())
         .orElse(null);

@@ -60,6 +60,7 @@ import software.amazon.cloudformation.proxy.delay.Constant;
 public class CreateHandlerTest extends AbstractTestBase {
 
   private static final String APP_ID = "a197dafc-2158-4f93-ab0d-b1c361c39838";
+  private static final String CLIENT_NAMESPACE = "client-namespace";
 
   @Mock
   private AmazonWebServicesClientProxy proxy;
@@ -104,6 +105,9 @@ public class CreateHandlerTest extends AbstractTestBase {
             .build())
         .iamIdentityProviderArn("arn:aws:iam::123456:oidc-provider/trial-123456.okta.com")
         .clientIdsForOIDC(List.of("0oaglq4vdnaWau7hW697"))
+        .quickSightConfiguration(QuickSightConfiguration.builder()
+            .clientNamespace(CLIENT_NAMESPACE)
+            .build())
         .tags(List.of(
             Tag.builder().key("TagA").value("ValueA").build()
         ))
@@ -156,6 +160,10 @@ public class CreateHandlerTest extends AbstractTestBase {
             .description(createModel.getDescription())
             .displayName(createModel.getDisplayName())
             .roleArn(createModel.getRoleArn())
+            .quickSightConfiguration(
+                software.amazon.awssdk.services.qbusiness.model.QuickSightConfiguration.builder()
+                    .clientNamespace(CLIENT_NAMESPACE)
+                    .build())
             .build());
 
     // call method under test
@@ -171,6 +179,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(model.getRoleArn()).isEqualTo(createModel.getRoleArn());
     assertThat(model.getDescription()).isEqualTo(createModel.getDescription());
     assertThat(model.getStatus()).isEqualTo(ApplicationStatus.ACTIVE.toString());
+    assertThat(model.getQuickSightConfiguration().getClientNamespace()).isEqualTo(CLIENT_NAMESPACE);
 
     ArgumentCaptor<CreateApplicationRequest> createAppReqCaptor = ArgumentCaptor.forClass(CreateApplicationRequest.class);
     verify(sdkClient).createApplication(createAppReqCaptor.capture());

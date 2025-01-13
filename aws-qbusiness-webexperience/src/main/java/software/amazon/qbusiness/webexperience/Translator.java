@@ -51,6 +51,7 @@ public class Translator {
         .origins(model.getOrigins())
         .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
         .customizationConfiguration(toCustomizationConfiguration(model.getCustomizationConfiguration()))
+        .browserExtensionConfiguration(toBrowserExtensionConfiguration(model.getBrowserExtensionConfiguration()))
         .build();
   }
 
@@ -105,6 +106,7 @@ public class Translator {
         .updatedAt(instantToString(awsResponse.updatedAt()))
         .origins(awsResponse.origins())
         .customizationConfiguration(fromCustomizationConfiguration(awsResponse.customizationConfiguration()))
+        .browserExtensionConfiguration(fromBrowserExtensionConfiguration(awsResponse.browserExtensionConfiguration()))
         .build();
   }
 
@@ -154,6 +156,7 @@ public class Translator {
         .identityProviderConfiguration(toIdentityProviderConfiguration(model.getIdentityProviderConfiguration()))
         .origins(model.getOrigins())
         .customizationConfiguration(toCustomizationConfiguration(model.getCustomizationConfiguration()))
+        .browserExtensionConfiguration(toBrowserExtensionConfiguration(model.getBrowserExtensionConfiguration()))
         .build();
   }
 
@@ -207,6 +210,30 @@ public class Translator {
             .logoUrl(serviceConfig.logoUrl())
             .fontUrl(serviceConfig.fontUrl())
             .faviconUrl(serviceConfig.faviconUrl())
+            .build();
+  }
+
+  static software.amazon.qbusiness.webexperience.BrowserExtensionConfiguration fromBrowserExtensionConfiguration(
+          software.amazon.awssdk.services.qbusiness.model.BrowserExtensionConfiguration serviceConfig
+  ) {
+    if (serviceConfig == null) {
+      return null;
+    }
+
+    return software.amazon.qbusiness.webexperience.BrowserExtensionConfiguration.builder()
+            .enabledBrowserExtensions(Set.copyOf(serviceConfig.enabledBrowserExtensionsAsStrings()))
+            .build();
+  }
+
+  static software.amazon.awssdk.services.qbusiness.model.BrowserExtensionConfiguration toBrowserExtensionConfiguration(
+          BrowserExtensionConfiguration modelConfig
+  ) {
+    if (modelConfig == null) {
+      return null;
+    }
+
+    return software.amazon.awssdk.services.qbusiness.model.BrowserExtensionConfiguration.builder()
+            .enabledBrowserExtensionsWithStrings(modelConfig.getEnabledBrowserExtensions())
             .build();
   }
 

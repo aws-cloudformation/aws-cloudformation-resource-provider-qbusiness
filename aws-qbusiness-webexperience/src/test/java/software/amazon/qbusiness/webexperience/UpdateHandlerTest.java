@@ -55,11 +55,13 @@ public class UpdateHandlerTest extends AbstractTestBase {
   private static final String LOGO_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.png";
   private static final String FONT_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.otf";
   private static final String FAVICON_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.ico";
+  private static final Set<String> ENABLED_BROWSER_EXTENSIONS = Set.of("CHROME", "FIREFOX");
 
   private AmazonWebServicesClientProxy proxy;
 
   private ProxyClient<QBusinessClient> proxyClient;
   private CustomizationConfiguration customizationConfiguration;
+  private BrowserExtensionConfiguration browserExtensionConfiguration;
 
   @Mock
   private QBusinessClient sdkClient;
@@ -93,6 +95,10 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .faviconUrl(FAVICON_URL)
         .build();
 
+    browserExtensionConfiguration = BrowserExtensionConfiguration.builder()
+        .enabledBrowserExtensions(ENABLED_BROWSER_EXTENSIONS)
+        .build();
+
     previousModel = ResourceModel.builder()
         .applicationId(APP_ID)
         .webExperienceId(WEB_EXPERIENCE_ID)
@@ -123,6 +129,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         ))
         .origins(ORIGINS_URL)
         .customizationConfiguration(customizationConfiguration)
+        .browserExtensionConfiguration(browserExtensionConfiguration)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -199,6 +206,9 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .logoUrl(LOGO_URL)
         .fontUrl(FONT_URL)
         .faviconUrl(FAVICON_URL)
+        .build());
+    assertThat(updateAppRequest.browserExtensionConfiguration()).isEqualTo(software.amazon.awssdk.services.qbusiness.model.BrowserExtensionConfiguration.builder()
+        .enabledBrowserExtensionsWithStrings(ENABLED_BROWSER_EXTENSIONS)
         .build());
 
     verify(sdkClient, times(2)).getWebExperience(

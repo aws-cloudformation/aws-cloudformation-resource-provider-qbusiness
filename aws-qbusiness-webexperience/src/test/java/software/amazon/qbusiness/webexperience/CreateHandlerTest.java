@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -60,6 +61,7 @@ public class CreateHandlerTest extends AbstractTestBase {
   private static final String LOGO_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.png";
   private static final String FONT_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.otf";
   private static final String FAVICON_URL = "https://someTest-public.s3.us-west-2.amazonaws.com/test.ico";
+  private static final Set<String> ENABLED_BROWSER_EXTENSIONS = Set.of("CHROME", "FIREFOX");
 
   private AmazonWebServicesClientProxy proxy;
   private ProxyClient<QBusinessClient> proxyClient;
@@ -71,6 +73,7 @@ public class CreateHandlerTest extends AbstractTestBase {
   private CreateHandler underTest;
   private IdentityProviderConfiguration identityProviderConfiguration;
   private CustomizationConfiguration customizationConfiguration;
+  private BrowserExtensionConfiguration browserExtensionConfiguration;
 
   private AutoCloseable testMocks;
 
@@ -101,6 +104,10 @@ public class CreateHandlerTest extends AbstractTestBase {
             .faviconUrl(FAVICON_URL)
             .build();
 
+    browserExtensionConfiguration = BrowserExtensionConfiguration.builder()
+            .enabledBrowserExtensions(ENABLED_BROWSER_EXTENSIONS)
+            .build();
+
     createModel = ResourceModel.builder()
         .applicationId(APP_ID)
         .title("This is a title of the web experience.")
@@ -109,6 +116,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         .identityProviderConfiguration(identityProviderConfiguration)
         .origins(ORIGINS_URL)
         .customizationConfiguration(customizationConfiguration)
+        .browserExtensionConfiguration(browserExtensionConfiguration)
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -157,6 +165,9 @@ public class CreateHandlerTest extends AbstractTestBase {
             .fontUrl(FONT_URL)
             .faviconUrl(FAVICON_URL)
             .build())
+        .browserExtensionConfiguration(software.amazon.awssdk.services.qbusiness.model.BrowserExtensionConfiguration.builder()
+            .enabledBrowserExtensionsWithStrings(ENABLED_BROWSER_EXTENSIONS)
+            .build())
         .build();
 
     when(qBusinessClient.getWebExperience(any(GetWebExperienceRequest.class)))
@@ -182,6 +193,7 @@ public class CreateHandlerTest extends AbstractTestBase {
     assertThat(resultModel.getDefaultEndpoint()).isEqualTo("Endpoint");
     assertThat(resultModel.getOrigins()).isEqualTo(ORIGINS_URL);
     assertThat(resultModel.getCustomizationConfiguration()).isEqualTo(customizationConfiguration);
+    assertThat(resultModel.getBrowserExtensionConfiguration()).isEqualTo(browserExtensionConfiguration);
 
     verify(qBusinessClient).createWebExperience(any(CreateWebExperienceRequest.class));
 

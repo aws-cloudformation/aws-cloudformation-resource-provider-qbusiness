@@ -3,18 +3,10 @@ package software.amazon.qbusiness.application;
 import static software.amazon.qbusiness.application.Constants.API_UPDATE_APPLICATION;
 
 import java.time.Duration;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.collections4.CollectionUtils;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
 import software.amazon.awssdk.services.qbusiness.model.GetApplicationResponse;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -71,56 +63,10 @@ public class UpdateHandler extends BaseHandlerStd {
                 .progress()
         )
         .then(progress -> {
-          var previousTags = TagUtils.getPreviouslyAttachedTags(
-              Translator.cfnTagsToGenericMap(request.getPreviousResourceState().getTags()), request);
-          var desiredTags = TagUtils.getNewDesiredTags(
-              Translator.cfnTagsToGenericMap(request.getDesiredResourceState().getTags()), request);
-
-          if (!TagUtils.shouldUpdateTags(previousTags, desiredTags)) {
-            // No updates to tags needed, return early with get application. Since ReadHandler will return Done, this will be the last step
-            return readHandler(proxy, request, callbackContext, proxyClient, logger);
-          }
-
-          Map<String, String> tagsToAdd = TagUtils.generateTagsToAdd(
-              previousTags,
-              desiredTags
-          );
-
-          if (tagsToAdd == null || tagsToAdd.isEmpty()) {
-            return progress;
-          }
-
-          return proxy.initiate("AWS-QBusiness-Application::TagResource", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-              .translateToServiceRequest(model -> Translator.tagResourceRequest(request, model, tagsToAdd))
-              .makeServiceCall(this::callTagResource)
-              .progress();
+          var arn = Utils.buildApplicationArn(request, progress.getResourceModel());
+          return TagUtils.updateTags(ResourceModel.TYPE_NAME, progress, request, arn, proxyClient, logger);
         })
-        .then(progress -> {
-          Set<String> tagsToRemove = TagUtils.generateTagsToRemove(
-              TagUtils.getPreviouslyAttachedTags(Translator.cfnTagsToGenericMap(request.getPreviousResourceState().getTags()), request),
-              TagUtils.getNewDesiredTags(Translator.cfnTagsToGenericMap(request.getDesiredResourceState().getTags()), request)
-          );
-
-          if (CollectionUtils.isEmpty(tagsToRemove)) {
-            return progress;
-          }
-
-          return proxy.initiate("AWS-QBusiness-Application::UnTagResource", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-              .translateToServiceRequest(model -> Translator.untagResourceRequest(request, model, tagsToRemove))
-              .makeServiceCall(this::callUntagResource)
-              .progress();
-        })
-        .then(model -> readHandler(proxy, request, callbackContext, proxyClient, logger));
-  }
-
-  private ProgressEvent<ResourceModel, CallbackContext> readHandler(
-      final AmazonWebServicesClientProxy proxy,
-      final ResourceHandlerRequest<ResourceModel> request,
-      final CallbackContext callbackContext,
-      final ProxyClient<QBusinessClient> proxyClient,
-      final Logger logger
-  ) {
-    return new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger);
+        .then(model -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
   }
 
   private UpdateApplicationResponse updateApplication(UpdateApplicationRequest request, ProxyClient<QBusinessClient> proxyClient) {
@@ -137,21 +83,5 @@ public class UpdateHandler extends BaseHandlerStd {
     var hasStabilized = ApplicationStatus.ACTIVE.equals(status);
     logger.log("[INFO] %s with ID: %s has stabilized: %s.".formatted(ResourceModel.TYPE_NAME, model.getApplicationId(), hasStabilized));
     return hasStabilized;
-  }
-
-  private TagResourceResponse callTagResource(TagResourceRequest request, ProxyClient<QBusinessClient> proxyClient) {
-    if (!request.hasTags()) {
-      return TagResourceResponse.builder().build();
-    }
-    var client = proxyClient.client();
-    return proxyClient.injectCredentialsAndInvokeV2(request, client::tagResource);
-  }
-
-  private UntagResourceResponse callUntagResource(UntagResourceRequest request, ProxyClient<QBusinessClient> proxyClient) {
-    if (!request.hasTagKeys()) {
-      return UntagResourceResponse.builder().build();
-    }
-    var client = proxyClient.client();
-    return proxyClient.injectCredentialsAndInvokeV2(request, client::untagResource);
   }
 }

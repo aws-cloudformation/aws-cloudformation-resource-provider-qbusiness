@@ -46,7 +46,7 @@ public class Translator {
       final ResourceHandlerRequest<ResourceModel> request,
       final ResourceModel model
   ) {
-    var merged = TagUtils.mergeCreateHandlerTagsToSdkTags(cfnTagsToGenericMap(model.getTags()), request);
+    List<Tag> mergedTags = TagUtils.mergeCreateHandlerTagsToSdkTags(request, model);
     return CreateApplicationRequest.builder()
         .clientToken(request.getClientRequestToken())
         .displayName(model.getDisplayName())
@@ -58,7 +58,7 @@ public class Translator {
         .description(model.getDescription())
         .encryptionConfiguration(toServiceEncryptionConfig(model.getEncryptionConfiguration()))
         .attachmentsConfiguration(toServiceAttachmentConfiguration(model.getAttachmentsConfiguration()))
-        .tags(merged)
+        .tags(mergedTags)
         .qAppsConfiguration(toServiceQAppsConfiguration(model.getQAppsConfiguration()))
         .personalizationConfiguration(toServicePersonalizationConfiguration(model.getPersonalizationConfiguration()))
         .quickSightConfiguration(toQuickSightConfiguration(model.getQuickSightConfiguration()))

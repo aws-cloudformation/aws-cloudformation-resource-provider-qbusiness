@@ -3,6 +3,7 @@ package software.amazon.qbusiness.application;
 import static software.amazon.qbusiness.application.Constants.API_CREATE_APPLICATION;
 import static software.amazon.qbusiness.application.Constants.API_UPDATE_APPLICATION;
 import static software.amazon.qbusiness.application.Constants.AUTOSUBSCRIBE_FIELD_VALIDATION_ERROR;
+import static software.amazon.qbusiness.application.Utils.primaryIdentifier;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -25,6 +26,7 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
+import software.amazon.qbusiness.common.ErrorUtils;
 
 public class CreateHandler extends BaseHandlerStd {
 
@@ -62,8 +64,9 @@ public class CreateHandler extends BaseHandlerStd {
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateApplication(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
-                .handleError((createReq, error, client, model, context) ->
-                    handleError(createReq, model, error, context, logger, API_CREATE_APPLICATION))
+                .handleError((createReq, error, client, model, context) -> ErrorUtils.handleError(model, primaryIdentifier(model), error,
+                    context, logger, ResourceModel.TYPE_NAME, API_CREATE_APPLICATION)
+                )
                 .progress()
         ).then(progress -> {
             if (!isIAMFederatedApp(IdentityType.fromValue(request.getDesiredResourceState().getIdentityType()))) {
@@ -89,7 +92,7 @@ public class CreateHandler extends BaseHandlerStd {
     if (isIAMFederatedApp(IdentityType.fromValue(desiredResourceState.getIdentityType()))) {
       AutoSubscriptionConfiguration config = desiredResourceState.getAutoSubscriptionConfiguration();
       if (config != null && AutoSubscriptionStatus.ENABLED.toString().equals(config.getAutoSubscribe()) &&
-              config.getDefaultSubscriptionType()!= null) {
+          config.getDefaultSubscriptionType() != null) {
         return;
       }
       throw new CfnInvalidRequestException(String.format(AUTOSUBSCRIBE_FIELD_VALIDATION_ERROR, desiredResourceState.getIdentityType()));
@@ -130,8 +133,8 @@ public class CreateHandler extends BaseHandlerStd {
   }
 
   private CreateApplicationResponse callCreateApplication(CreateApplicationRequest request,
-                                                          ProxyClient<QBusinessClient> proxyClient,
-                                                          ResourceModel model) {
+      ProxyClient<QBusinessClient> proxyClient,
+      ResourceModel model) {
     validateAutoSubscriptionConfiguration(model);
     var client = proxyClient.client();
     CreateApplicationResponse response = proxyClient.injectCredentialsAndInvokeV2(request, client::createApplication);
@@ -140,7 +143,7 @@ public class CreateHandler extends BaseHandlerStd {
   }
 
   private UpdateApplicationResponse callUpdateApplication(UpdateApplicationRequest request,
-                                                          ProxyClient<QBusinessClient> proxyClient) {
+      ProxyClient<QBusinessClient> proxyClient) {
     var client = proxyClient.client();
     return proxyClient.injectCredentialsAndInvokeV2(request, client::updateApplication);
   }

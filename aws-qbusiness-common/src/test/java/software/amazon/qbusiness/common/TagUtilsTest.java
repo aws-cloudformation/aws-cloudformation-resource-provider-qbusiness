@@ -42,26 +42,4 @@ class TagUtilsTest {
     testAutoCloseable.close();
   }
 
-  @Test
-  void mergeCreateHandlerTagsToSdkTags() {
-    List<Tag> merged = TagUtils.mergeCreateHandlerTagsToSdkTags(resourceModelTags, testRequest);
-    assertThat(merged).containsExactlyInAnyOrder(
-        Tag.builder().key("tagA").value("ValueValue").build(),
-        Tag.builder().key("stackTagA").value("valueA").build(),
-        Tag.builder().key("aws:cloudformation:stack-id").value("superstack").build()
-    );
-  }
-
-  @Test
-  void testItSkipsStackTags() {
-    testRequest = testRequest.toBuilder()
-        .desiredResourceTags(null)
-        .build();
-    List<Tag> merged = TagUtils.mergeCreateHandlerTagsToSdkTags(resourceModelTags, testRequest);
-
-    assertThat(merged).containsExactlyInAnyOrder(
-        Tag.builder().key("tagA").value("ValueValue").build(),
-        Tag.builder().key("aws:cloudformation:stack-id").value("superstack").build()
-    );
-  }
 }

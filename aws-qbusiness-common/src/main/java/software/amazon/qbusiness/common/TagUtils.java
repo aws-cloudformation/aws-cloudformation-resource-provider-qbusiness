@@ -126,7 +126,7 @@ public final class TagUtils {
       final Map<String, String> modelTags,
       final ResourceHandlerRequest<T> handlerRequest
   ) {
-    return Stream.of(handlerRequest.getDesiredResourceTags(), modelTags, handlerRequest.getSystemTags())
+    var merged = Stream.of(handlerRequest.getDesiredResourceTags(), modelTags, handlerRequest.getSystemTags())
         .filter(Objects::nonNull)
         .flatMap(map -> map.entrySet().stream())
         .map(entry -> Tag.builder()
@@ -135,6 +135,11 @@ public final class TagUtils {
             .build()
         )
         .collect(Collectors.toList());
+
+    if (merged.isEmpty()) {
+      return null;
+    }
+    return  merged;
   }
 
   private static boolean shouldUpdateTags(

@@ -1,0 +1,36 @@
+{
+    "artifact_type": "RESOURCE",
+    "typeName": "AWS::QBusiness::Permission",
+    "language": "java",
+    "runtime": "java17",
+    "entrypoint": "software.amazon.qbusiness.permission.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.qbusiness.permission.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "version": false,
+        "subparser_name": null,
+        "verbose": 0,
+        "force": false,
+        "type_name": "AWS::QBusiness::Permission",
+        "artifact_type": null,
+        "endpoint_url": null,
+        "region": null,
+        "target_schemas": [],
+        "profile": null,
+        "namespace": [
+            "software",
+            "amazon",
+            "qbusiness",
+            "permission"
+        ],
+        "codegen_template_path": "guided_aws",
+        "protocolVersion": "2.0.0"
+    },
+    "logProcessorEnabled": "true",
+    "executableEntrypoint": "software.amazon.qbusiness.permission.HandlerWrapperExecutable",
+    "contractSettings": {},
+    "canarySettings": {
+        "contract_test_file_names": [
+            "inputs_1.json"
+        ]
+    }
+}

@@ -1,6 +1,8 @@
 package software.amazon.qbusiness.application;
 
 import static software.amazon.qbusiness.application.Constants.API_UPDATE_APPLICATION;
+import static software.amazon.qbusiness.application.Utils.primaryIdentifier;
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 
 import java.time.Duration;
 
@@ -58,7 +60,7 @@ public class UpdateHandler extends BaseHandlerStd {
                 .makeServiceCall(this::updateApplication)
                 .stabilize((serviceRequest, updateApplicationResponse, client, model, context) -> isStabilized(client, model))
                 .handleError((serviceRequest, error, client, model, context) -> handleError(
-                    serviceRequest, model, error, context, logger, API_UPDATE_APPLICATION
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_UPDATE_APPLICATION
                 ))
                 .progress()
         )

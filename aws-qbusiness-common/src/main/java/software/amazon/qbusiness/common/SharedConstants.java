@@ -6,6 +6,7 @@ public final class SharedConstants {
   public static final String SERVICE_NAME = "QBusiness";
   public static final String SERVICE_NAME_LOWER = SERVICE_NAME.toLowerCase(Locale.ENGLISH);
   public static final String ENV_AWS_REGION = "AWS_REGION";
+  public static final String API_LIST_TAGS = "ListTagsForResource";
 
   private SharedConstants(){}
 }

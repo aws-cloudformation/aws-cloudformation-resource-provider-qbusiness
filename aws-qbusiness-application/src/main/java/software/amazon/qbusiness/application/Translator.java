@@ -1,14 +1,9 @@
 package software.amazon.qbusiness.application;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import software.amazon.awssdk.services.qbusiness.model.CreateApplicationRequest;
@@ -20,8 +15,6 @@ import software.amazon.awssdk.services.qbusiness.model.ListApplicationsResponse;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.Tag;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateApplicationRequest;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.qbusiness.common.TagUtils;
@@ -295,20 +288,6 @@ public class Translator {
         .toList();
   }
 
-  public static Map<String, String> cfnTagsToGenericMap(final Collection<software.amazon.qbusiness.application.Tag> tags) {
-    if (CollectionUtils.isEmpty(tags)) {
-      return Map.of();
-    }
-
-    return tags.stream()
-        .filter(tag -> tag.getValue() != null)
-        .collect(Collectors.toMap(
-            software.amazon.qbusiness.application.Tag::getKey,
-            software.amazon.qbusiness.application.Tag::getValue,
-            (oldValue, newValue) -> newValue)
-        );
-  }
-
   /**
    * Request to delete a resource
    *
@@ -380,57 +359,5 @@ public class Translator {
             .build()
         )
         .toList();
-  }
-
-  /**
-   * Request to add tags to a resource
-   *
-   * @param model resource model
-   * @return TagResourceRequest the aws service request to create a resource
-   */
-  static TagResourceRequest tagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Map<String, String> addedTags) {
-    var applicationArn = Utils.buildApplicationArn(request, model);
-
-    List<Tag> toTags = Optional.ofNullable(addedTags)
-        .map(Map::entrySet)
-        .map(pairs -> pairs.stream()
-            .map(pair -> Tag.builder()
-                .key(pair.getKey())
-                .value(pair.getValue())
-                .build()
-            )
-            .toList()
-        )
-        .filter(list -> !list.isEmpty())
-        .orElse(null);
-
-    return TagResourceRequest.builder()
-        .resourceARN(applicationArn)
-        .tags(toTags)
-        .build();
-  }
-
-  /**
-   * Request to add tags to a resource
-   *
-   * @param model resource model
-   * @return UntagResourceRequest the aws service request to create a resource
-   */
-  static UntagResourceRequest untagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Set<String> removedTags) {
-    var applicationArn = Utils.buildApplicationArn(request, model);
-    var tagsToRemove = Optional.ofNullable(removedTags)
-        .filter(set -> !set.isEmpty())
-        .orElse(null);
-
-    return UntagResourceRequest.builder()
-        .resourceARN(applicationArn)
-        .tagKeys(tagsToRemove)
-        .build();
   }
 }

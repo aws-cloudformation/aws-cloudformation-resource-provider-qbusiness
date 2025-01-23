@@ -72,7 +72,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     return proxyClient.injectCredentialsAndInvokeV2(getApplicationRequest, proxyClient.client()::getApplication);
   }
 
-  protected ProgressEvent<ResourceModel, CallbackContext> handleError(
+ /* protected ProgressEvent<ResourceModel, CallbackContext> handleError(
       QBusinessRequest qBusinessRequest,
       ResourceModel resourceModel,
       Exception error,
@@ -105,5 +105,5 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     }
 
     return ProgressEvent.failed(resourceModel, context, cfnException.getErrorCode(), cfnException.getMessage());
-  }
+  }*/
 }

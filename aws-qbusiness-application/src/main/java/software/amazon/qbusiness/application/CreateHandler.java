@@ -4,6 +4,7 @@ import static software.amazon.qbusiness.application.Constants.API_CREATE_APPLICA
 import static software.amazon.qbusiness.application.Constants.API_UPDATE_APPLICATION;
 import static software.amazon.qbusiness.application.Constants.AUTOSUBSCRIBE_FIELD_VALIDATION_ERROR;
 import static software.amazon.qbusiness.application.Utils.primaryIdentifier;
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -64,7 +65,7 @@ public class CreateHandler extends BaseHandlerStd {
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateApplication(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
-                .handleError((createReq, error, client, model, context) -> ErrorUtils.handleError(model, primaryIdentifier(model), error,
+                .handleError((createReq, error, client, model, context) -> handleError(model, primaryIdentifier(model), error,
                     context, logger, ResourceModel.TYPE_NAME, API_CREATE_APPLICATION)
                 )
                 .progress()
@@ -79,8 +80,9 @@ public class CreateHandler extends BaseHandlerStd {
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall(this::callUpdateApplication)
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
-                .handleError((updateReq, error, client, model, context) ->
-                        handleError(updateReq, model, error, context, logger, API_UPDATE_APPLICATION))
+                .handleError((updateReq, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_APPLICATION
+                ))
                 .progress();
             }
         ).then(progress ->

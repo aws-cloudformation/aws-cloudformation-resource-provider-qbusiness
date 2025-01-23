@@ -1,6 +1,9 @@
 package software.amazon.qbusiness.application;
 
 import static software.amazon.qbusiness.application.Constants.API_DELETE_APPLICATION;
+import static software.amazon.qbusiness.application.Constants.API_UPDATE_APPLICATION;
+import static software.amazon.qbusiness.application.Utils.primaryIdentifier;
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 
 import java.time.Duration;
 
@@ -58,7 +61,7 @@ public class DeleteHandler extends BaseHandlerStd {
                 // See contract tests: https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
                 // If the resource did not exist before the delete call, a not found is expected.
                 .handleError((awsRequest, error, clientProxyClient, model, context) -> handleError(
-                    awsRequest, model, error, context, logger, API_DELETE_APPLICATION
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_APPLICATION
                 ))
                 .done(deleteResponse -> ProgressEvent.defaultSuccessHandler(null))
         );

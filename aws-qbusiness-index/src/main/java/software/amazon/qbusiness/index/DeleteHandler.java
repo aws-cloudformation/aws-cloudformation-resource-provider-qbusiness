@@ -1,6 +1,5 @@
 package software.amazon.qbusiness.index;
 
-
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.DeleteIndexRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeleteIndexResponse;
@@ -14,7 +13,9 @@ import software.amazon.cloudformation.proxy.delay.Constant;
 
 import java.time.Duration;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.index.Constants.API_DELETE_INDEX;
+import static software.amazon.qbusiness.index.Utils.primaryIdentifier;
 
 public class DeleteHandler extends BaseHandlerStd {
 
@@ -60,7 +61,7 @@ public class DeleteHandler extends BaseHandlerStd {
                 // See contract tests: https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
                 // If the resource did not exist before the delete call, a not found is expected.
                 .handleError((awsRequest, error, clientProxyClient, model, context) -> handleError(
-                    awsRequest, model, error, context, logger, API_DELETE_INDEX
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_INDEX
                 ))
                 .done(deleteResponse -> ProgressEvent.defaultSuccessHandler(null))
         );

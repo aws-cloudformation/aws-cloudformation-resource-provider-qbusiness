@@ -19,8 +19,10 @@ import software.amazon.cloudformation.proxy.delay.Constant;
 import java.time.Duration;
 import java.util.Objects;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.index.Constants.API_CREATE_INDEX;
 import static software.amazon.qbusiness.index.Constants.API_UPDATE_INDEX;
+import static software.amazon.qbusiness.index.Utils.primaryIdentifier;
 
 public class CreateHandler extends BaseHandlerStd {
 
@@ -55,12 +57,13 @@ public class CreateHandler extends BaseHandlerStd {
     return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
         .then(progress ->
             proxy.initiate("AWS-QBusiness-Index::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request.getClientRequestToken(), model))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request, model))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateIndex(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
-                .handleError((createReq, error, client, model, context) ->
-                    handleError(createReq, model, error, context, logger, API_CREATE_INDEX))
+                .handleError((createReq, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_INDEX
+                ))
                 .progress()
         )
         .then(progress -> {
@@ -79,8 +82,9 @@ public class CreateHandler extends BaseHandlerStd {
               .makeServiceCall(this::callUpdateIndex)
               .stabilize((updateIndexRequest, updateIndexResponse, clientProxyClient, model, context) ->
                   isStabilized(clientProxyClient, model, logger))
-              .handleError((updateIndexRequest, error, client, model, context) ->
-                  handleError(updateIndexRequest, model, error, context, logger, API_UPDATE_INDEX))
+              .handleError((updateIndexRequest, error, client, model, context) -> handleError(
+                  model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_UPDATE_INDEX
+              ))
               .progress();
         })
         .then(progress ->

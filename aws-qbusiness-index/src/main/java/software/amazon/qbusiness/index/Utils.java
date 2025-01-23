@@ -4,8 +4,11 @@ import lombok.NonNull;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.util.Locale;
+import java.util.Optional;
 
 import static software.amazon.qbusiness.index.Constants.SERVICE_NAME_LOWER;
+
+import org.json.JSONObject;
 
 public class Utils {
 
@@ -33,4 +36,10 @@ public class Utils {
     return INDEX_ARN_FORMAT.formatted(partition, region, accountId, applicationId, indexId).toLowerCase(Locale.ENGLISH);
   }
 
+  public static String primaryIdentifier(ResourceModel model) {
+    return Optional.ofNullable(model)
+        .map(ResourceModel::getPrimaryIdentifier)
+        .map(JSONObject::toString)
+        .orElse("");
+  }
 }

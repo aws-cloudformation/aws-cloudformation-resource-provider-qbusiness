@@ -67,10 +67,8 @@ class TagUtilsTest {
   private static class Tag {
     @JsonProperty("Key")
     private String key;
-
     @JsonProperty("Value")
     private String value;
-
   }
 
   private static final Credentials MOCK_CREDENTIALS = new Credentials("accessKey", "secretKey", "token");

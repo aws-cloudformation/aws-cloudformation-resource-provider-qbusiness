@@ -1,7 +1,6 @@
 package software.amazon.qbusiness.application;
 
 import static software.amazon.qbusiness.application.Constants.API_CREATE_APPLICATION;
-import static software.amazon.qbusiness.application.Constants.API_UPDATE_APPLICATION;
 import static software.amazon.qbusiness.application.Constants.AUTOSUBSCRIBE_FIELD_VALIDATION_ERROR;
 import static software.amazon.qbusiness.application.Utils.primaryIdentifier;
 import static software.amazon.qbusiness.common.ErrorUtils.handleError;
@@ -27,7 +26,6 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
-import software.amazon.qbusiness.common.ErrorUtils;
 
 public class CreateHandler extends BaseHandlerStd {
 
@@ -65,9 +63,9 @@ public class CreateHandler extends BaseHandlerStd {
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateApplication(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
-                .handleError((createReq, error, client, model, context) -> handleError(model, primaryIdentifier(model), error,
-                    context, logger, ResourceModel.TYPE_NAME, API_CREATE_APPLICATION)
-                )
+                .handleError((createReq, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_APPLICATION
+                ))
                 .progress()
         ).then(progress -> {
             if (!isIAMFederatedApp(IdentityType.fromValue(request.getDesiredResourceState().getIdentityType()))) {

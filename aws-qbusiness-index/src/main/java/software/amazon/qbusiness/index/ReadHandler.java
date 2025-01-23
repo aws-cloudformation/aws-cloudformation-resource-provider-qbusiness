@@ -9,7 +9,10 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
+import static software.amazon.qbusiness.common.SharedConstants.API_LIST_TAGS;
 import static software.amazon.qbusiness.index.Constants.API_GET_INDEX;
+import static software.amazon.qbusiness.index.Utils.primaryIdentifier;
 
 public class ReadHandler extends BaseHandlerStd {
   private Logger logger;
@@ -33,8 +36,9 @@ public class ReadHandler extends BaseHandlerStd {
                 .translateToServiceRequest(Translator::translateToReadRequest)
                 // Make call to the service
                 .makeServiceCall(this::callGetIndex)
-                .handleError((getIndexRequest, error, client, model, context) ->
-                    handleError(getIndexRequest, model, error, context, logger, API_GET_INDEX))
+                .handleError((getIndexRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_GET_INDEX
+                ))
                 .done(serviceResponse -> ProgressEvent.progress(Translator.translateFromReadResponse(serviceResponse), callbackContext))
         )
         // Now process listing tags for the resource
@@ -42,8 +46,9 @@ public class ReadHandler extends BaseHandlerStd {
             proxy.initiate("AWS-QBusiness-Index::ListTags", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
                 .translateToServiceRequest(model -> Translator.translateToListTagsRequest(request, model))
                 .makeServiceCall(this::callListTags)
-                .handleError((listTagsRequest, error, client, model, context) ->
-                    handleError(listTagsRequest, model, error, context, logger, API_GET_INDEX))
+                .handleError((listTagsRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_LIST_TAGS
+                ))
                 .done(listTagsResponse -> ProgressEvent.defaultSuccessHandler(
                         Translator.translateFromReadResponseWithTags(listTagsResponse, progress.getResourceModel())
                     )

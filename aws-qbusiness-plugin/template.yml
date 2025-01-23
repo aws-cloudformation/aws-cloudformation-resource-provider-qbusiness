@@ -12,12 +12,12 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: software.amazon.qbusiness.plugin.HandlerWrapper::handleRequest
-      Runtime: java8
-      CodeUri: ./target/aws-qbusiness-plugin-handler-1.0-SNAPSHOT.jar
+      Runtime: java17
+      CodeUri: ./target/aws-qbusiness-plugin-1.0.jar
 
   TestEntrypoint:
     Type: AWS::Serverless::Function
     Properties:
       Handler: software.amazon.qbusiness.plugin.HandlerWrapper::testEntrypoint
-      Runtime: java8
-      CodeUri: ./target/aws-qbusiness-plugin-handler-1.0-SNAPSHOT.jar
+      Runtime: java17
+      CodeUri: ./target/aws-qbusiness-plugin-1.0.jar

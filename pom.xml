@@ -12,8 +12,10 @@
     <modules>
         <module>aws-qbusiness-common</module>
         <module>aws-qbusiness-application</module>
+        <module>aws-qbusiness-dataaccessor</module>
         <module>aws-qbusiness-datasource</module>
         <module>aws-qbusiness-index</module>
+        <module>aws-qbusiness-permission</module>
         <module>aws-qbusiness-plugin</module>
         <module>aws-qbusiness-retriever</module>
         <module>aws-qbusiness-webexperience</module>

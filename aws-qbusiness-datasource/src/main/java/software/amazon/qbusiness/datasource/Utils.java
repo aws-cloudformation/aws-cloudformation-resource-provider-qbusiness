@@ -1,6 +1,10 @@
 package software.amazon.qbusiness.datasource;
 
-import static software.amazon.qbusiness.datasource.Constants.SERVICE_NAME_LOWER;
+import static software.amazon.qbusiness.common.SharedConstants.SERVICE_NAME_LOWER;
+
+import java.util.Optional;
+
+import org.json.JSONObject;
 
 import lombok.NonNull;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
@@ -35,5 +39,12 @@ public class Utils {
       @NonNull String dataSourceId
   ) {
     return DATA_SOURCE_ARN_FORMAT.formatted(partition, region, accountId, applicationId, indexId, dataSourceId);
+  }
+
+  public static String primaryIdentifier(ResourceModel model) {
+    return Optional.ofNullable(model)
+        .map(ResourceModel::getPrimaryIdentifier)
+        .map(JSONObject::toString)
+        .orElse("");
   }
 }

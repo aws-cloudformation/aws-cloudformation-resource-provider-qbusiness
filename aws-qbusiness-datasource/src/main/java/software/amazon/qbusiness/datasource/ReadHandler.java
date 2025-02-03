@@ -1,7 +1,9 @@
 package software.amazon.qbusiness.datasource;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
+import static software.amazon.qbusiness.common.SharedConstants.API_LIST_TAGS;
 import static software.amazon.qbusiness.datasource.Constants.API_GET_DATASOURCE;
-import static software.amazon.qbusiness.datasource.Constants.API_LIST_TAGS;
+import static software.amazon.qbusiness.datasource.Utils.primaryIdentifier;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -34,7 +36,7 @@ public class ReadHandler extends BaseHandlerStd {
                 .translateToServiceRequest(Translator::translateToReadRequest)
                 .makeServiceCall(this::callGetDataSource)
                 .handleError((getDataSourceRequest, error, client, model, context) -> handleError(
-                    getDataSourceRequest, model, error, context, logger, API_GET_DATASOURCE
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_GET_DATASOURCE
                 ))
                 .done(response -> ProgressEvent.progress(Translator.translateFromReadResponse(response), callbackContext))
         )
@@ -47,7 +49,7 @@ public class ReadHandler extends BaseHandlerStd {
                 .translateToServiceRequest(model -> Translator.translateToListTagsRequest(request, model))
                 .makeServiceCall(this::callListTags)
                 .handleError((listTagsReq, error, client, model, context) -> handleError(
-                    listTagsReq, model, error, context, logger, API_LIST_TAGS
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_LIST_TAGS
                 ))
                 .done(listTagsResponse -> ProgressEvent.defaultSuccessHandler(
                     Translator.translateFromReadResponseWithTags(listTagsResponse, progress.getResourceModel())

@@ -1,6 +1,8 @@
 package software.amazon.qbusiness.datasource;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.datasource.Constants.API_DELETE_DATASOURCE;
+import static software.amazon.qbusiness.datasource.Utils.primaryIdentifier;
 
 import java.time.Duration;
 
@@ -58,7 +60,7 @@ public class DeleteHandler extends BaseHandlerStd {
                 .makeServiceCall(this::callDeleteDataSource)
                 .stabilize((deleteReq, deleteRes, client, model, context) -> isDoneDeleting(client, model))
                 .handleError((deleteReq, error, clientProxyClient, model, context) -> handleError(
-                    deleteReq, model, error, context, logger, API_DELETE_DATASOURCE
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_DATASOURCE
                 ))
                 .done(deleteResponse -> ProgressEvent.defaultSuccessHandler(null))
         );

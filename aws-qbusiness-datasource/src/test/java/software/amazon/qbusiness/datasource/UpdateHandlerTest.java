@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -67,8 +66,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
 
   private AutoCloseable testMocks;
 
-  private TagHelper tagHelper;
-
   private UpdateHandler underTest;
 
   private ResourceHandlerRequest<ResourceModel> testRequest;
@@ -82,12 +79,10 @@ public class UpdateHandlerTest extends AbstractTestBase {
     sdkClient = mock(QBusinessClient.class);
     proxyClient = MOCK_PROXY(proxy, sdkClient);
 
-    tagHelper = spy(new TagHelper());
     underTest = new UpdateHandler(Constant.of()
         .delay(Duration.ofSeconds(5))
         .timeout(Duration.ofSeconds(45))
-        .build(),
-        tagHelper
+        .build()
     );
 
     previousModel = ResourceModel.builder()
@@ -103,8 +98,8 @@ public class UpdateHandlerTest extends AbstractTestBase {
                 "depth", 10,
                 "thing", Map.of(
                     "a", 5
-                    )
                 )
+            )
         )
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
@@ -123,11 +118,11 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .roleArn("new role")
         .configuration(
             Map.of(
-                    "depth", 10,
-                    "thing", Map.of(
-                        "a", 5
-                    )
+                "depth", 10,
+                "thing", Map.of(
+                    "a", 5
                 )
+            )
         )
         .tags(List.of(
             Tag.builder().key("remain").value("thesame").build(),
@@ -148,9 +143,9 @@ public class UpdateHandlerTest extends AbstractTestBase {
             .build()
         )
         .mediaExtractionConfiguration(MediaExtractionConfiguration.builder()
-                .imageExtractionConfiguration(ImageExtractionConfiguration.builder()
-                        .imageExtractionStatus("ENABLED").build())
-                    .build())
+            .imageExtractionConfiguration(ImageExtractionConfiguration.builder()
+                .imageExtractionStatus("ENABLED").build())
+            .build())
         .build();
 
     testRequest = ResourceHandlerRequest.<ResourceModel>builder()
@@ -223,7 +218,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
     verify(sdkClient).untagResource(untagReqCaptor.capture());
     verify(sdkClient, times(2)).getDataSource(argThat(getAppMatcher()));
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
 
     var updateReqArgument = updateReqCaptor.getValue();
     assertThat(updateReqArgument.syncSchedule()).isEqualTo(updateModel.getSyncSchedule());
@@ -235,7 +229,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     assertThat(updateInlineConf.documentContentOperator()).isEqualTo(DocumentContentOperator.DELETE);
 
     var updateImageExtractionConfig = updateReqArgument.mediaExtractionConfiguration()
-            .imageExtractionConfiguration();
+        .imageExtractionConfiguration();
     assertThat(updateImageExtractionConfig.imageExtractionStatus()).isEqualTo(ImageExtractionStatus.ENABLED);
 
     var tagResourceRequest = tagReqCaptor.getValue();
@@ -294,7 +288,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
     verify(sdkClient).updateDataSource(any(UpdateDataSourceRequest.class));
     verify(sdkClient, times(2)).getDataSource(argThat(getAppMatcher()));
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
   }
 
   private static Stream<Arguments> tagAndUntagArguments() {
@@ -348,7 +341,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
     verify(sdkClient).updateDataSource(any(UpdateDataSourceRequest.class));
     verify(sdkClient, times(2)).getDataSource(argThat(getAppMatcher()));
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
   }
 
   @Test

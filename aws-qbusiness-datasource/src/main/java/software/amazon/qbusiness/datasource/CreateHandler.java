@@ -1,6 +1,8 @@
 package software.amazon.qbusiness.datasource;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.datasource.Constants.API_CREATE_DATASOURCE;
+import static software.amazon.qbusiness.datasource.Utils.primaryIdentifier;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -59,13 +61,13 @@ public class CreateHandler extends BaseHandlerStd {
         .then(progress ->
             proxy.initiate("AWS-QBusiness-DataSource::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
                 .translateToServiceRequest(model -> Translator.translateToCreateRequest(
-                    request.getClientRequestToken(), model
+                    request, model
                 ))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateDataSource(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((createReq, createResponse, client, model, context) -> isStabilized(request, client, model, logger))
                 .handleError((createReq, error, client, model, context) -> handleError(
-                    createReq, model, error, context, logger, API_CREATE_DATASOURCE
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_DATASOURCE
                 ))
                 .progress()
         )

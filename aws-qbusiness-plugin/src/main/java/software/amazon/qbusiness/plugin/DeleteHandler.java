@@ -1,5 +1,9 @@
 package software.amazon.qbusiness.plugin;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
+import static software.amazon.qbusiness.plugin.Constants.API_DELETE_PLUGIN;
+import static software.amazon.qbusiness.plugin.Utils.primaryIdentifier;
+
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.DeletePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeletePluginResponse;
@@ -12,8 +16,6 @@ import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-
-import static software.amazon.qbusiness.plugin.Constants.API_DELETE_PLUGIN;
 
 public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
@@ -36,8 +38,9 @@ public class DeleteHandler extends BaseHandlerStd {
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall(this::callDeleteRetriever)
                 .stabilize((deleteReq, deleteRes, client, model, context) -> isDoneDeleting(client, model))
-                .handleError((deleteRetrieverRequest, error, client, model, context) ->
-                    handleError(deleteRetrieverRequest, model, error, context, logger, API_DELETE_PLUGIN))
+                .handleError((deleteRetrieverRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_PLUGIN
+                ))
                 .progress()
         )
         .then(progress -> ProgressEvent.defaultSuccessHandler(null));

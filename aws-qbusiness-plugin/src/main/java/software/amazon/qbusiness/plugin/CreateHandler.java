@@ -1,15 +1,18 @@
 package software.amazon.qbusiness.plugin;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
+import static software.amazon.qbusiness.plugin.Constants.API_CREATE_PLUGIN;
+import static software.amazon.qbusiness.plugin.Constants.API_UPDATE_PLUGIN;
+import static software.amazon.qbusiness.plugin.Utils.primaryIdentifier;
+
+import java.time.Duration;
+
+import org.apache.commons.lang3.StringUtils;
+
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
-import software.amazon.awssdk.services.qbusiness.model.ApplicationStatus;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginResponse;
-import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
-import software.amazon.awssdk.services.qbusiness.model.GetApplicationRequest;
-import software.amazon.awssdk.services.qbusiness.model.GetApplicationResponse;
-import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.GetPluginResponse;
-import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
 import software.amazon.awssdk.services.qbusiness.model.PluginBuildStatus;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginResponse;
@@ -20,14 +23,6 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
-
-import java.time.Duration;
-import java.util.Objects;
-
-import static software.amazon.qbusiness.plugin.Constants.API_CREATE_PLUGIN;
-import static software.amazon.qbusiness.plugin.Constants.API_UPDATE_PLUGIN;
-
-import org.apache.commons.lang3.StringUtils;
 
 public class CreateHandler extends BaseHandlerStd {
   private Logger logger;
@@ -61,12 +56,13 @@ public class CreateHandler extends BaseHandlerStd {
     return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
         .then(progress ->
             proxy.initiate("AWS-QBusiness-Plugin::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToCreateRequest(model, request.getClientRequestToken()))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(model, request))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreatePlugin(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((createReq, createResponse, client, model, context) -> isStabilized(request, client, model, logger))
-                .handleError((createPluginRequest, error, client, model, context) ->
-                    handleError(createPluginRequest, model, error, context, logger, API_CREATE_PLUGIN))
+                .handleError((createPluginRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_PLUGIN
+                ))
                 .progress()
         )
         .then(progress -> {
@@ -78,7 +74,7 @@ public class CreateHandler extends BaseHandlerStd {
               .translateToServiceRequest(Translator::translateToPostCreateUpdateRequest)
               .makeServiceCall(this::callUpdatePlugin)
               .handleError((updatePluginRequest, error, client, model, context) -> handleError(
-                  updatePluginRequest, model, error, context, logger, API_UPDATE_PLUGIN
+                  model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_UPDATE_PLUGIN
               ))
               .progress();
         })

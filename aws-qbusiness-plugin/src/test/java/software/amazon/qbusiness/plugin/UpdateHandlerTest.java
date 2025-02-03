@@ -92,7 +92,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
     private ResourceModel model;
     private ResourceModel updatedModel;
     private ResourceHandlerRequest<ResourceModel> request;
-    private final TagHelper tagHelper = spy(new TagHelper());
 
     @BeforeEach
     public void setup() {
@@ -103,7 +102,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .build();
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         proxyClient = MOCK_PROXY(proxy, qBusinessClient);
-        this.underTest = new UpdateHandler(testBackOff, tagHelper);
+        this.underTest = new UpdateHandler(testBackOff);
 
         serviceAuthConfiguration = PluginAuthConfiguration.builder()
                 .basicAuthConfiguration(BasicAuthConfiguration.builder()
@@ -562,7 +561,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
         )
     );
     verify(qBusinessClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
   }
 
 }

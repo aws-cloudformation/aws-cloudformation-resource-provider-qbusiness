@@ -2,11 +2,8 @@ package software.amazon.qbusiness.plugin;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
 import software.amazon.awssdk.services.qbusiness.model.CreatePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeletePluginRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetPluginRequest;
@@ -15,10 +12,9 @@ import software.amazon.awssdk.services.qbusiness.model.ListPluginsRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListPluginsResponse;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdatePluginRequest;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.qbusiness.common.TagUtils;
 
 /**
  * This class is a centralized placeholder for
@@ -35,7 +31,7 @@ public class Translator {
    * @param model resource model
    * @return awsRequest the aws service request to create a resource
    */
-  static CreatePluginRequest translateToCreateRequest(final ResourceModel model, final String idempotenceToken) {
+  static CreatePluginRequest translateToCreateRequest(final ResourceModel model, ResourceHandlerRequest<ResourceModel> request) {
     return CreatePluginRequest.builder()
         .applicationId(model.getApplicationId())
         .displayName(model.getDisplayName())
@@ -43,8 +39,8 @@ public class Translator {
         .serverUrl(model.getServerUrl())
         .authConfiguration(AuthConfigHelper.convertToServiceAuthConfig(model.getAuthConfiguration()))
         .customPluginConfiguration(CustomPluginConfigHelper.convertToServiceCustomPluginConfig(model.getCustomPluginConfiguration()))
-        .clientToken(idempotenceToken)
-        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .clientToken(request.getClientRequestToken())
+        .tags(TagUtils.mergeCreateHandlerTagsToSdkTags(request, model))
         .build();
   }
 
@@ -158,56 +154,6 @@ public class Translator {
             .build())
         .toList();
 
-  }
-
-  /**
-   * Request to add tags to a resource
-   *
-   * @return awsRequest the aws service request to create a resource
-   */
-  static TagResourceRequest tagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Map<String, String> addedTags) {
-    var pluginArn = Utils.buildPluginArn(request, model);
-
-    List<software.amazon.awssdk.services.qbusiness.model.Tag> toTags = Optional.ofNullable(addedTags)
-        .map(Map::entrySet)
-        .map(pairs -> pairs.stream()
-            .map(pair -> software.amazon.awssdk.services.qbusiness.model.Tag.builder()
-                .key(pair.getKey())
-                .value(pair.getValue())
-                .build()
-            )
-            .toList()
-        )
-        .filter(list -> !list.isEmpty())
-        .orElse(null);
-
-    return TagResourceRequest.builder()
-        .resourceARN(pluginArn)
-        .tags(toTags)
-        .build();
-  }
-
-  /**
-   * Request to remove tags from a resource
-   *
-   * @return awsRequest the aws service request to create a resource
-   */
-  static UntagResourceRequest untagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Set<String> removedTags) {
-    var pluginArn = Utils.buildPluginArn(request, model);
-    var tagsToRemove = Optional.ofNullable(removedTags)
-        .filter(set -> !set.isEmpty())
-        .orElse(null);
-
-    return UntagResourceRequest.builder()
-        .resourceARN(pluginArn)
-        .tagKeys(tagsToRemove)
-        .build();
   }
 
   static ResourceModel translateFromReadResponseWithTags(final ListTagsForResourceResponse listTagsResponse, final ResourceModel model) {

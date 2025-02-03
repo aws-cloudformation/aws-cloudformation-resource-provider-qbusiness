@@ -3,6 +3,9 @@ package software.amazon.qbusiness.plugin;
 import static software.amazon.qbusiness.plugin.Constants.SERVICE_NAME_LOWER;
 
 import java.util.Locale;
+import java.util.Optional;
+
+import org.json.JSONObject;
 
 import lombok.NonNull;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
@@ -30,5 +33,12 @@ public class Utils {
       @NonNull final String applicationId,
       @NonNull final String pluginId) {
     return PLUGIN_ARN_FORMAT.formatted(partition, region, accountId, applicationId, pluginId).toLowerCase(Locale.ENGLISH);
+  }
+
+  public static String primaryIdentifier(ResourceModel model) {
+    return Optional.ofNullable(model)
+        .map(ResourceModel::getPrimaryIdentifier)
+        .map(JSONObject::toString)
+        .orElse("");
   }
 }

@@ -18,7 +18,9 @@ import software.amazon.cloudformation.proxy.delay.Constant;
 import java.time.Duration;
 import java.util.Objects;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.webexperience.Constants.API_CREATE_WEB_EXPERIENCE;
+import static software.amazon.qbusiness.webexperience.Utils.primaryIdentifier;
 
 public class CreateHandler extends BaseHandlerStd {
 
@@ -53,13 +55,14 @@ public class CreateHandler extends BaseHandlerStd {
     return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
         .then(progress ->
             proxy.initiate("AWS-QBusiness-WebExperience::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request.getClientRequestToken(), model))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request, model))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) ->
                     callCreateWebExperience(awsRequest, clientProxyClient, progress.getResourceModel()))
                 .stabilize((awsReq, response, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model, logger))
-                .handleError((createReq, error, client, model, context) ->
-                    handleError(createReq, model, error, context, logger, API_CREATE_WEB_EXPERIENCE))
+                .handleError((createReq, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_WEB_EXPERIENCE
+                ))
                 .progress()
         )
         .then(progress -> readHandler(proxy, request, callbackContext, proxyClient));

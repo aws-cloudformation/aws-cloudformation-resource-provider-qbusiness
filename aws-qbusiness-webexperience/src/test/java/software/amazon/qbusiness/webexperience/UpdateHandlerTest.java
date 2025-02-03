@@ -71,7 +71,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
   private ResourceModel previousModel;
   private ResourceModel updateModel;
   private Constant backOffStrategy;
-  private TagHelper tagHelper;
   private UpdateHandler underTest;
 
   @BeforeEach
@@ -84,9 +83,8 @@ public class UpdateHandlerTest extends AbstractTestBase {
         .delay(Duration.ofSeconds(5))
         .timeout(Duration.ofSeconds(45))
         .build();
-    tagHelper = spy(new TagHelper());
 
-    underTest = new UpdateHandler(backOffStrategy, tagHelper);
+    underTest = new UpdateHandler(backOffStrategy);
 
     customizationConfiguration = CustomizationConfiguration.builder()
         .customCSSUrl(CUSTOM_CSS_URL)
@@ -366,7 +364,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
         argThat((ArgumentMatcher<GetWebExperienceRequest>) t -> t.applicationId().equals(APP_ID) && t.webExperienceId().equals(WEB_EXPERIENCE_ID))
     );
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
   }
 
   private static Stream<Arguments> tagAndUntagArguments() {
@@ -422,7 +419,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
         argThat((ArgumentMatcher<GetWebExperienceRequest>) t -> t.applicationId().equals(APP_ID) && t.webExperienceId().equals(WEB_EXPERIENCE_ID))
     );
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
   }
 
   @Test

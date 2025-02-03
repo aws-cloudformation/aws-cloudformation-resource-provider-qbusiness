@@ -14,7 +14,9 @@ import software.amazon.cloudformation.proxy.delay.Constant;
 
 import java.time.Duration;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.webexperience.Constants.API_DELETE_WEB_EXPERIENCE;
+import static software.amazon.qbusiness.webexperience.Utils.primaryIdentifier;
 
 public class DeleteHandler extends BaseHandlerStd {
 
@@ -60,7 +62,7 @@ public class DeleteHandler extends BaseHandlerStd {
                 // See contract tests: https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
                 // If the resource did not exist before the delete call, a not found is expected.
                 .handleError((awsRequest, error, clientProxyClient, model, context) -> handleError(
-                    awsRequest, model, error, context, logger, API_DELETE_WEB_EXPERIENCE
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_WEB_EXPERIENCE
                 ))
                 .done(deleteResponse -> ProgressEvent.defaultSuccessHandler(null))
         );

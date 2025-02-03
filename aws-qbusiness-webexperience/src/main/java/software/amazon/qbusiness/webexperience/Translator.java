@@ -1,15 +1,10 @@
 package software.amazon.qbusiness.webexperience;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import software.amazon.awssdk.awscore.AwsRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeleteWebExperienceRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetWebExperienceRequest;
@@ -18,11 +13,9 @@ import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceReques
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.ListWebExperiencesRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListWebExperiencesResponse;
-import software.amazon.awssdk.services.qbusiness.model.Tag;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateWebExperienceRequest;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.qbusiness.common.TagUtils;
 
 /**
  * This class is a centralized placeholder for
@@ -39,9 +32,9 @@ public class Translator {
    * @param model resource model
    * @return awsRequest the aws service request to create a resource
    */
-  static CreateWebExperienceRequest translateToCreateRequest(final String idempotentToken, final ResourceModel model) {
+  static CreateWebExperienceRequest translateToCreateRequest(final ResourceHandlerRequest<ResourceModel> request, final ResourceModel model) {
     return CreateWebExperienceRequest.builder()
-        .clientToken(idempotentToken)
+        .clientToken(request.getClientRequestToken())
         .applicationId(model.getApplicationId())
         .roleArn(model.getRoleArn())
         .identityProviderConfiguration(toIdentityProviderConfiguration(model.getIdentityProviderConfiguration()))
@@ -49,7 +42,7 @@ public class Translator {
         .subtitle(model.getSubtitle())
         .welcomeMessage(model.getWelcomeMessage())
         .origins(model.getOrigins())
-        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .tags(TagUtils.mergeCreateHandlerTagsToSdkTags(request, model))
         .customizationConfiguration(toCustomizationConfiguration(model.getCustomizationConfiguration()))
         .browserExtensionConfiguration(toBrowserExtensionConfiguration(model.getBrowserExtensionConfiguration()))
         .build();
@@ -292,31 +285,6 @@ public class Translator {
   }
 
   /**
-   * Request to update properties of a previously created resource
-   *
-   * @param model resource model
-   * @return awsRequest the aws service request to modify a resource
-   */
-  static AwsRequest translateToFirstUpdateRequest(final ResourceModel model) {
-    final AwsRequest awsRequest = null;
-    // TODO: construct a request
-    // e.g. https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs/blob/2077c92299aeb9a68ae8f4418b5e932b12a8b186/aws-logs-loggroup/src/main/java/com/aws/logs/loggroup/Translator.java#L45-L50
-    return awsRequest;
-  }
-
-  /**
-   * Request to update some other properties that could not be provisioned through first update request
-   *
-   * @param model resource model
-   * @return awsRequest the aws service request to modify a resource
-   */
-  static AwsRequest translateToSecondUpdateRequest(final ResourceModel model) {
-    final AwsRequest awsRequest = null;
-    // TODO: construct a request
-    return awsRequest;
-  }
-
-  /**
    * Request to list resources
    *
    * @param nextToken token passed to the aws service list resources request
@@ -349,65 +317,6 @@ public class Translator {
             .defaultEndpoint(summary.defaultEndpoint())
             .build())
         .toList();
-  }
-
-  private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
-    return Optional.ofNullable(collection)
-        .map(Collection::stream)
-        .orElseGet(Stream::empty);
-  }
-
-  /**
-   * Request to add tags to a resource
-   *
-   * @param model resource model
-   * @return awsRequest the aws service request to create a resource
-   */
-  static TagResourceRequest tagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Map<String, String> addedTags) {
-    var webExperienceArn = Utils.buildWebExperienceArn(request, model);
-
-    List<Tag> toTags = Optional.ofNullable(addedTags)
-        .map(Map::entrySet)
-        .map(pairs -> pairs.stream()
-            .map(pair -> Tag.builder()
-                .key(pair.getKey())
-                .value(pair.getValue())
-                .build()
-            )
-            .toList()
-        )
-        .filter(list -> !list.isEmpty())
-        .orElse(null);
-
-    return TagResourceRequest.builder()
-        .resourceARN(webExperienceArn)
-        .tags(toTags)
-        .build();
-  }
-
-  /**
-   * Request to remove tags from a resource
-   *
-   * @param request request details
-   * @param model resource model
-   * @return UntagResourceRequest the aws service request to create a resource
-   */
-  static UntagResourceRequest untagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Set<String> removedTags) {
-    var webExperienceArn = Utils.buildWebExperienceArn(request, model);
-    var tagsToRemove = Optional.ofNullable(removedTags)
-        .filter(set -> !set.isEmpty())
-        .orElse(null);
-
-    return UntagResourceRequest.builder()
-        .resourceARN(webExperienceArn)
-        .tagKeys(tagsToRemove)
-        .build();
   }
 
   private static String instantToString(Instant instant) {

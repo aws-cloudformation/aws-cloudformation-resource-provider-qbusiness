@@ -1,7 +1,7 @@
 package software.amazon.qbusiness.retriever;
 
-import static software.amazon.qbusiness.retriever.Constants.ENV_AWS_REGION;
-import static software.amazon.qbusiness.retriever.Constants.SERVICE_NAME_LOWER;
+import static software.amazon.qbusiness.common.SharedConstants.ENV_AWS_REGION;
+import static software.amazon.qbusiness.common.SharedConstants.SERVICE_NAME_LOWER;
 
 import java.net.URI;
 

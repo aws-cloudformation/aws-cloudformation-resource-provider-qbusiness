@@ -1,6 +1,8 @@
 package software.amazon.qbusiness.retriever;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.retriever.Constants.API_CREATE_RETRIEVER;
+import static software.amazon.qbusiness.retriever.Utils.primaryIdentifier;
 
 import java.time.Duration;
 
@@ -45,11 +47,12 @@ public class CreateHandler extends BaseHandlerStd {
     return ProgressEvent.progress(request.getDesiredResourceState(), callbackContext)
         .then(progress ->
             proxy.initiate("AWS-QBusiness-Retriever::Create", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request.getClientRequestToken(), model))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request, model))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateRetriever(awsRequest, clientProxyClient, progress.getResourceModel()))
-                .handleError((createRetrieverRequest, error, client, model, context) ->
-                    handleError(createRetrieverRequest, model, error, context, logger, API_CREATE_RETRIEVER))
+                .handleError((createRetrieverRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_RETRIEVER
+                ))
                 .progress()
         )
         .then(progress ->

@@ -1,5 +1,11 @@
 package software.amazon.qbusiness.retriever;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
+import static software.amazon.qbusiness.retriever.Constants.API_DELETE_RETRIEVER;
+import static software.amazon.qbusiness.retriever.Utils.primaryIdentifier;
+
+import java.time.Duration;
+
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.DeleteRetrieverRequest;
 import software.amazon.awssdk.services.qbusiness.model.DeleteRetrieverResponse;
@@ -9,11 +15,6 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
-
-import java.time.Duration;
-
-import static software.amazon.qbusiness.retriever.Constants.API_DELETE_RETRIEVER;
-
 
 public class DeleteHandler extends BaseHandlerStd {
   private static final Constant DEFAULT_BACK_OFF_STRATEGY = Constant.of()
@@ -48,8 +49,9 @@ public class DeleteHandler extends BaseHandlerStd {
             proxy.initiate("AWS-QBusiness-Retriever::Delete", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall(this::callDeleteRetriever)
-                .handleError((deleteRetrieverRequest, error, client, model, context) ->
-                    handleError(deleteRetrieverRequest, model, error, context, logger, API_DELETE_RETRIEVER))
+                .handleError((deleteRetrieverRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_RETRIEVER
+                ))
                 .progress()
         )
         .then(progress -> ProgressEvent.defaultSuccessHandler(null));

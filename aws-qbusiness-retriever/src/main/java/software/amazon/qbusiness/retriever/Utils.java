@@ -4,9 +4,11 @@ import lombok.NonNull;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 import java.util.Locale;
+import java.util.Optional;
 
-import static software.amazon.qbusiness.retriever.Constants.SERVICE_NAME_LOWER;
+import static software.amazon.qbusiness.common.SharedConstants.SERVICE_NAME_LOWER;
 
+import org.json.JSONObject;
 
 public class Utils {
 
@@ -32,5 +34,12 @@ public class Utils {
       @NonNull String applicationId,
       @NonNull String retrieverId) {
     return RETRIEVER_ARN_FORMAT.formatted(partition, region, accountId, applicationId, retrieverId).toLowerCase(Locale.ENGLISH);
+  }
+
+  public static String primaryIdentifier(ResourceModel model) {
+    return Optional.ofNullable(model)
+        .map(ResourceModel::getPrimaryIdentifier)
+        .map(JSONObject::toString)
+        .orElse("");
   }
 }

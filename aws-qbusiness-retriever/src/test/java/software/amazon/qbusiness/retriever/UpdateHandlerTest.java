@@ -1,5 +1,22 @@
 package software.amazon.qbusiness.retriever;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverResponse;
@@ -28,24 +46,6 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 import software.amazon.cloudformation.proxy.delay.Constant;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 public class UpdateHandlerTest extends AbstractTestBase {
   private static final String APP_ID = "ApplicationId";
@@ -70,7 +70,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
   private ResourceModel previousModel;
   private ResourceModel updatedModel;
   private ResourceHandlerRequest<ResourceModel> request;
-  private final TagHelper tagHelper = spy(new TagHelper());
 
 
   @BeforeEach
@@ -83,7 +82,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
     proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
     sdkClient = mock(QBusinessClient.class);
     proxyClient = MOCK_PROXY(proxy, sdkClient);
-    this.underTest = new UpdateHandler(testBackOff, tagHelper);
+    this.underTest = new UpdateHandler(testBackOff);
 
     KendraIndexConfiguration previousKendraIndexConfiguration = KendraIndexConfiguration.builder()
         .indexId(INDEX_ID)
@@ -361,6 +360,5 @@ public class UpdateHandlerTest extends AbstractTestBase {
         )
     );
     verify(sdkClient).listTagsForResource(any(ListTagsForResourceRequest.class));
-    verify(tagHelper).shouldUpdateTags(any());
   }
 }

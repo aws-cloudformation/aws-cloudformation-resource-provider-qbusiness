@@ -1,5 +1,9 @@
 package software.amazon.qbusiness.retriever;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
+import static software.amazon.qbusiness.retriever.Constants.API_GET_RETRIEVER;
+import static software.amazon.qbusiness.retriever.Utils.primaryIdentifier;
+
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetRetrieverResponse;
@@ -8,8 +12,6 @@ import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
-
-import static software.amazon.qbusiness.retriever.Constants.API_GET_RETRIEVER;
 
 public class ReadHandler extends BaseHandlerStd {
   private Logger logger;
@@ -30,8 +32,9 @@ public class ReadHandler extends BaseHandlerStd {
             proxy.initiate("AWS-QBusiness-Retriever::Read", proxyClient, progress.getResourceModel(), progress.getCallbackContext())
                 .translateToServiceRequest(Translator::translateToReadRequest)
                 .makeServiceCall(this::callGetRetriever)
-                .handleError((getRetrieverRequest, error, client, model, context) ->
-                    handleError(getRetrieverRequest, model, error, context, logger, API_GET_RETRIEVER))
+                .handleError((getRetrieverRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_GET_RETRIEVER
+                ))
                 .done(serviceResponse -> ProgressEvent.progress(Translator.translateFromReadResponse(serviceResponse), callbackContext))
         )
         .then(progress ->
@@ -41,8 +44,9 @@ public class ReadHandler extends BaseHandlerStd {
                 )
                 .translateToServiceRequest(model -> Translator.translateToListTagsRequest(request, model))
                 .makeServiceCall(this::callListTags)
-                .handleError((listTagsRequest, error, client, model, context) ->
-                    handleError(listTagsRequest, model, error, context, logger, API_GET_RETRIEVER))
+                .handleError((listTagsRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_GET_RETRIEVER
+                ))
                 .done(listTagsResponse -> ProgressEvent.defaultSuccessHandler(
                         Translator.translateFromReadResponseWithTags(listTagsResponse, progress.getResourceModel())
                     )

@@ -1,14 +1,9 @@
 package software.amazon.qbusiness.retriever;
 
-import static java.util.stream.Collectors.toList;
-
 import java.time.Instant;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import software.amazon.awssdk.services.qbusiness.model.CreateRetrieverRequest;
@@ -19,12 +14,10 @@ import software.amazon.awssdk.services.qbusiness.model.ListRetrieversRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListRetrieversResponse;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.Tag;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateRetrieverRequest;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.qbusiness.common.TagUtils;
 
 /**
  * This class is a centralized placeholder for
@@ -41,15 +34,15 @@ public class Translator {
    * @param model resource model
    * @return awsRequest the aws service request to create a resource
    */
-  static CreateRetrieverRequest translateToCreateRequest(final String idempotentToken, final ResourceModel model) {
+  static CreateRetrieverRequest translateToCreateRequest(final ResourceHandlerRequest<ResourceModel> request, final ResourceModel model) {
     return CreateRetrieverRequest.builder()
         .applicationId(model.getApplicationId())
         .type(model.getType())
         .displayName(model.getDisplayName())
         .configuration(toServiceRetrieverConfiguration(model.getConfiguration()))
         .roleArn(model.getRoleArn())
-        .clientToken(idempotentToken)
-        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .clientToken(request.getClientRequestToken())
+        .tags(TagUtils.mergeCreateHandlerTagsToSdkTags(request, model))
         .build();
   }
 
@@ -150,58 +143,6 @@ public class Translator {
     return Optional.ofNullable(collection)
         .map(Collection::stream)
         .orElseGet(Stream::empty);
-  }
-
-  /**
-   * Request to add tags to a resource
-   *
-   * @param model resource model
-   * @return awsRequest the aws service request to create a resource
-   */
-  static TagResourceRequest tagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Map<String, String> addedTags) {
-    var retrieverArn = Utils.buildRetrieverArn(request, model);
-
-    List<Tag> toTags = Optional.ofNullable(addedTags)
-        .map(Map::entrySet)
-        .map(pairs -> pairs.stream()
-            .map(pair -> Tag.builder()
-                .key(pair.getKey())
-                .value(pair.getValue())
-                .build()
-            )
-            .toList()
-        )
-        .filter(list -> !list.isEmpty())
-        .orElse(null);
-
-    return TagResourceRequest.builder()
-        .resourceARN(retrieverArn)
-        .tags(toTags)
-        .build();
-  }
-
-  /**
-   * Request to add tags to a resource
-   *
-   * @param model resource model
-   * @return awsRequest the aws service request to create a resource
-   */
-  static UntagResourceRequest untagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Set<String> removedTags) {
-    var retrieverArn = Utils.buildRetrieverArn(request, model);
-    var tagsToRemove = Optional.ofNullable(removedTags)
-        .filter(set -> !set.isEmpty())
-        .orElse(null);
-
-    return UntagResourceRequest.builder()
-        .resourceARN(retrieverArn)
-        .tagKeys(tagsToRemove)
-        .build();
   }
 
   static ListTagsForResourceRequest translateToListTagsRequest(final ResourceHandlerRequest<ResourceModel> request, final ResourceModel model) {

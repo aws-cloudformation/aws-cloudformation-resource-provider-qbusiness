@@ -6,9 +6,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>software.amazon.qbusiness.dataaccessor</groupId>
-    <artifactId>aws-qbusiness-dataaccessor-handler</artifactId>
-    <name>aws-qbusiness-dataaccessor-handler</name>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>aws-qbusiness-dataaccessor</artifactId>
+    <name>aws-qbusiness-dataaccessor</name>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <parent>
@@ -26,6 +26,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>software.amazon.qbusiness.common</groupId>
+            <artifactId>aws-qbusiness-handler-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/software.amazon.cloudformation/aws-cloudformation-rpdk-java-plugin -->
         <dependency>
             <groupId>software.amazon.cloudformation</groupId>

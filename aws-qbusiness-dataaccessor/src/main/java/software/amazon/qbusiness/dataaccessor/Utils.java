@@ -1,8 +1,12 @@
 package software.amazon.qbusiness.dataaccessor;
 
-import static software.amazon.qbusiness.dataaccessor.Constants.SERVICE_NAME_LOWER;
+import static software.amazon.qbusiness.common.SharedConstants.SERVICE_NAME_LOWER;
 
 import java.util.Locale;
+import java.util.Optional;
+
+import org.json.JSONObject;
+
 import lombok.NonNull;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
@@ -22,6 +26,13 @@ public class Utils {
     var applicationId = model.getApplicationId();
     var dataAccessorId = model.getDataAccessorId();
     return buildDataAccessorArn(partition, region, accountId, applicationId, dataAccessorId);
+  }
+
+  public static String primaryIdentifier(ResourceModel model) {
+    return Optional.ofNullable(model)
+        .map(ResourceModel::getPrimaryIdentifier)
+        .map(JSONObject::toString)
+        .orElse("");
   }
 
   private static String buildDataAccessorArn(

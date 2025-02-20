@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -60,7 +59,6 @@ public class UpdateHandlerTest extends AbstractTestBase {
     private ResourceModel model;
     private ResourceModel updatedModel;
     private ResourceHandlerRequest<ResourceModel> request;
-    private final TagHelper tagHelper = spy(new TagHelper());
     private software.amazon.awssdk.services.qbusiness.model.ActionConfiguration actionConfiguration;
 
     @BeforeEach
@@ -68,7 +66,7 @@ public class UpdateHandlerTest extends AbstractTestBase {
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         qBusinessClient = mock(QBusinessClient.class);
         proxyClient = MOCK_PROXY(proxy, qBusinessClient);
-        underTest = new UpdateHandler(tagHelper);
+        underTest = new UpdateHandler();
 
         model = ResourceModel.builder()
             .applicationId(APPLICATION_ID)

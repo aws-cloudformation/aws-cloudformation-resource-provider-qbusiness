@@ -1,6 +1,8 @@
 package software.amazon.qbusiness.dataaccessor;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.dataaccessor.Constants.API_CREATE_DATA_ACCESSOR;
+import static software.amazon.qbusiness.dataaccessor.Utils.primaryIdentifier;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.CreateDataAccessorRequest;
@@ -31,14 +33,12 @@ public class CreateHandler extends BaseHandlerStd {
         .then(progress ->
             proxy.initiate("AWS-QBusiness-DataAccessor::Create", proxyClient,
                     progress.getResourceModel(), progress.getCallbackContext())
-                .translateToServiceRequest(
-                    model -> Translator.translateToCreateRequest(request.getClientRequestToken(),
-                        model))
+                .translateToServiceRequest(model -> Translator.translateToCreateRequest(request, model))
                 .makeServiceCall((awsRequest, client) -> callCreateDataAccessor(awsRequest, client,
                     progress.getResourceModel()))
-                .handleError((createDataAccessorRequest, error, client, model, context) ->
-                    handleError(createDataAccessorRequest, model, error, context, logger,
-                        API_CREATE_DATA_ACCESSOR))
+                .handleError((createDataAccessorRequest, error, client, model, context) -> handleError(
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_DATA_ACCESSOR
+                ))
                 .progress()
         )
         .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext,

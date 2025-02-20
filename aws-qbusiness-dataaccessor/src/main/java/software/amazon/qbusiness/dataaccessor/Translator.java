@@ -3,17 +3,10 @@ package software.amazon.qbusiness.dataaccessor;
 import static software.amazon.qbusiness.dataaccessor.converter.ActionConfigurationConverter.fromServiceActionConfigurations;
 import static software.amazon.qbusiness.dataaccessor.converter.ActionConfigurationConverter.toServiceActionConfigurations;
 
-import com.google.common.collect.Lists;
 import java.time.Instant;
-import software.amazon.awssdk.awscore.AwsResponse;
-
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import software.amazon.awssdk.services.qbusiness.model.DeleteDataAccessorRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataAccessorRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataAccessorResponse;
@@ -21,10 +14,9 @@ import software.amazon.awssdk.services.qbusiness.model.ListDataAccessorsRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListDataAccessorsResponse;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.ListTagsForResourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.TagResourceRequest;
-import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateDataAccessorRequest;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.qbusiness.common.TagUtils;
 
 /**
  * This class is a centralized placeholder for
@@ -37,17 +29,21 @@ public class Translator {
 
   /**
    * Request to create a resource
+   * @param request resource handler request.
    * @param model resource model
    * @return awsRequest the aws service request to create a resource
    */
-  public static software.amazon.awssdk.services.qbusiness.model.CreateDataAccessorRequest translateToCreateRequest(final String idempotentToken, final ResourceModel model) {
+  public static software.amazon.awssdk.services.qbusiness.model.CreateDataAccessorRequest translateToCreateRequest(
+      final ResourceHandlerRequest<ResourceModel> request,
+      final ResourceModel model
+  ) {
     return software.amazon.awssdk.services.qbusiness.model.CreateDataAccessorRequest.builder()
-        .clientToken(idempotentToken)
+        .clientToken(request.getClientRequestToken())
         .displayName(model.getDisplayName())
         .applicationId(model.getApplicationId())
         .principal(model.getPrincipal())
         .actionConfigurations(toServiceActionConfigurations(model.getActionConfigurations()))
-        .tags(TagHelper.serviceTagsFromCfnTags(model.getTags()))
+        .tags(TagUtils.mergeCreateHandlerTagsToSdkTags(request, model))
         .build();
   }
 
@@ -140,73 +136,6 @@ public class Translator {
             .build()
         )
         .toList();
-  }
-
-  /**
-   * Translates resource objects from sdk into a resource model (primary identifier only)
-   * @param awsResponse the aws service describe resource response
-   * @return list of resource models
-   */
-  static List<ResourceModel> translateFromListRequest(final AwsResponse awsResponse) {
-    // e.g. https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-logs/blob/2077c92299aeb9a68ae8f4418b5e932b12a8b186/aws-logs-loggroup/src/main/java/com/aws/logs/loggroup/Translator.java#L75-L82
-    return streamOfOrEmpty(Lists.newArrayList())
-        .map(resource -> ResourceModel.builder()
-            // include only primary identifier
-            .build())
-        .collect(Collectors.toList());
-  }
-
-  private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
-    return Optional.ofNullable(collection)
-        .map(Collection::stream)
-        .orElseGet(Stream::empty);
-  }
-
-  /**
-   * Request to add tags to a resource
-   * @return awsRequest the aws service request to create a resource
-   */
-  static TagResourceRequest tagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Map<String, String> addedTags) {
-    var dataAccessorArn = Utils.buildDataAccessorArn(request, model);
-
-    List<software.amazon.awssdk.services.qbusiness.model.Tag> toTags = Optional.ofNullable(addedTags)
-        .map(Map::entrySet)
-        .map(pairs -> pairs.stream()
-            .map(pair -> software.amazon.awssdk.services.qbusiness.model.Tag.builder()
-                .key(pair.getKey())
-                .value(pair.getValue())
-                .build()
-            )
-            .toList()
-        )
-        .filter(list -> !list.isEmpty())
-        .orElse(null);
-    return TagResourceRequest.builder()
-        .resourceARN(dataAccessorArn)
-        .tags(toTags)
-        .build();
-  }
-
-  /**
-   * Request to add tags to a resource
-   * @return awsRequest the aws service request to create a resource
-   */
-  static UntagResourceRequest untagResourceRequest(
-      final ResourceHandlerRequest<ResourceModel> request,
-      final ResourceModel model,
-      final Set<String> removedTags) {
-    var dataAccessorArn = Utils.buildDataAccessorArn(request, model);
-    var tagsToRemove = Optional.ofNullable(removedTags)
-        .filter(set -> !set.isEmpty())
-        .orElse(null);
-
-    return UntagResourceRequest.builder()
-        .resourceARN(dataAccessorArn)
-        .tagKeys(tagsToRemove)
-        .build();
   }
 
   static ResourceModel translateFromReadResponseWithTags(final ListTagsForResourceResponse listTagsResponse, final ResourceModel model) {

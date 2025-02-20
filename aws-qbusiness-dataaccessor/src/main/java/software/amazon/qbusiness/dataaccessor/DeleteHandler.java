@@ -1,6 +1,8 @@
 package software.amazon.qbusiness.dataaccessor;
 
+import static software.amazon.qbusiness.common.ErrorUtils.handleError;
 import static software.amazon.qbusiness.dataaccessor.Constants.API_DELETE_DATA_ACCESSOR;
+import static software.amazon.qbusiness.dataaccessor.Utils.primaryIdentifier;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.DeleteDataAccessorRequest;
@@ -32,7 +34,7 @@ public class DeleteHandler extends BaseHandlerStd {
                 .translateToServiceRequest(Translator::translateToDeleteRequest)
                 .makeServiceCall(this::callDeleteDataAccessor)
                 .handleError((awsRequest, error, clientProxyClient, model, context) -> handleError(
-                    awsRequest, model, error, context, logger, API_DELETE_DATA_ACCESSOR
+                    model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_DELETE_DATA_ACCESSOR
                 ))
                 .progress()
         )

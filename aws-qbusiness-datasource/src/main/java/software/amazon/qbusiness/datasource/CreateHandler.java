@@ -5,16 +5,10 @@ import static software.amazon.qbusiness.datasource.Constants.API_CREATE_DATASOUR
 import static software.amazon.qbusiness.datasource.Utils.primaryIdentifier;
 
 import java.time.Duration;
-import java.util.Objects;
 
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.CreateDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.CreateDataSourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
-import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
-import software.amazon.awssdk.services.qbusiness.model.InternalServerException;
-import software.amazon.awssdk.utils.StringUtils;
-import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -50,7 +44,6 @@ public class CreateHandler extends BaseHandlerStd {
 
     this.logger = logger;
 
-    var reqModel = request.getDesiredResourceState();
     logger.log("[INFO] Starting Create Data Source process in stack: %s For Account: %s, Application: %s, Index: %s"
         .formatted(request.getStackId(), request.getAwsAccountId(),
             request.getDesiredResourceState().getApplicationId(), request.getDesiredResourceState().getIndexId()
@@ -65,54 +58,13 @@ public class CreateHandler extends BaseHandlerStd {
                 ))
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall((awsRequest, clientProxyClient) -> callCreateDataSource(awsRequest, clientProxyClient, progress.getResourceModel()))
-                .stabilize((createReq, createResponse, client, model, context) -> isStabilized(request, client, model, logger))
+                .stabilize((createReq, createResponse, client, model, context) -> isCreatingOrUpdateStabilized(API_CREATE_DATASOURCE, request, client, model, logger))
                 .handleError((createReq, error, client, model, context) -> handleError(
                     model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_CREATE_DATASOURCE
                 ))
                 .progress()
         )
         .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient, logger));
-  }
-
-  private boolean isStabilized(
-      final ResourceHandlerRequest<ResourceModel> request,
-      ProxyClient<QBusinessClient> proxyClient,
-      ResourceModel model,
-      Logger logger
-  ) {
-    logger.log("[INFO] Checking for Create Complete for Data Source process in stack: %s with ID: %s, For Account: %s, Application: %s, Index: %s"
-        .formatted(request.getStackId(), request.getAwsAccountId(), model.getDataSourceId(), model.getApplicationId(), model.getIndexId())
-    );
-
-    GetDataSourceResponse getDataSourceRes = getDataSource(model, proxyClient);
-    var status = getDataSourceRes.status();
-
-    if (DataSourceStatus.ACTIVE.equals(status)) {
-      logger.log("[INFO] %s with ID: %s, for App: %s, IndexId: %s, stack ID: %s has stabilized".formatted(
-          ResourceModel.TYPE_NAME, model.getDataSourceId(), model.getApplicationId(), model.getIndexId(), request.getStackId()
-      ));
-
-      return true;
-    }
-
-    if (!DataSourceStatus.FAILED.equals(status)) {
-      logger.log("[INFO] %s with ID: %s, for App: %s, IndexId: %s, stack ID: %s is still stabilizing".formatted(
-          ResourceModel.TYPE_NAME, model.getDataSourceId(), model.getApplicationId(), model.getIndexId(), request.getStackId()
-      ));
-      return false;
-    }
-
-    logger.log("[INFO] %s with ID: %s, for App: %s, IndexId: %s, stack ID: %s has failed to stabilize with message: %s".formatted(
-        ResourceModel.TYPE_NAME, model.getDataSourceId(), model.getApplicationId(), model.getIndexId(), request.getStackId(),
-        Objects.nonNull(getDataSourceRes.error()) ? getDataSourceRes.error().errorMessage() : null
-    ));
-
-    InternalServerException causeError = null;
-    if (Objects.nonNull(getDataSourceRes.error()) && StringUtils.isNotBlank(getDataSourceRes.error().errorMessage())) {
-      causeError = InternalServerException.builder().message(getDataSourceRes.error().errorMessage()).build();
-    }
-
-    throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getDataSourceId(), causeError);
   }
 
   private CreateDataSourceResponse callCreateDataSource(

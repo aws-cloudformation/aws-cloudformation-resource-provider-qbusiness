@@ -256,6 +256,36 @@ public class CreateHandlerTest extends AbstractTestBase {
     verify(sdkClient, times(1)).getDataSource(any(GetDataSourceRequest.class));
   }
 
+  @Test
+  public void testCreatingWithErrorMessageResultsInNonStabilized() {
+    // set up
+    when(sdkClient.getDataSource(any(GetDataSourceRequest.class)))
+        .thenReturn(
+            GetDataSourceResponse.builder()
+                .applicationId(APP_ID)
+                .indexId(INDEX_ID)
+                .dataSourceId(DATA_SOURCE_ID)
+                .status(DataSourceStatus.CREATING)
+                .build()
+        )
+        .thenReturn(GetDataSourceResponse.builder()
+            .applicationId(APP_ID)
+            .indexId(INDEX_ID)
+            .dataSourceId(DATA_SOURCE_ID)
+            .status(DataSourceStatus.CREATING)
+            .error(ErrorDetail.builder().errorMessage("Yeah, we could not connect to your data source.").build())
+            .build()
+        );
+
+    // call method & verify
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    )).isInstanceOf(CfnNotStabilizedException.class);
+
+    verify(sdkClient).createDataSource(any(CreateDataSourceRequest.class));
+    verify(sdkClient, times(2)).getDataSource(any(GetDataSourceRequest.class));
+  }
+
   private static Stream<Arguments> serviceErrorsAndHandlerCodes() {
     return Stream.of(
         Arguments.of(ValidationException.builder().build(), HandlerErrorCode.InvalidRequest),

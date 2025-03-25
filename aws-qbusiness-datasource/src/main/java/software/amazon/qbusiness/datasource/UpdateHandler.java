@@ -5,10 +5,7 @@ import static software.amazon.qbusiness.datasource.Constants.API_UPDATE_DATASOUR
 import static software.amazon.qbusiness.datasource.Utils.primaryIdentifier;
 
 import java.time.Duration;
-
 import software.amazon.awssdk.services.qbusiness.QBusinessClient;
-import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
-import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.UpdateDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateDataSourceResponse;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -60,7 +57,9 @@ public class UpdateHandler extends BaseHandlerStd {
                 .translateToServiceRequest(Translator::translateToUpdateRequest)
                 .backoffDelay(backOffStrategy)
                 .makeServiceCall(this::updateDataSource)
-                .stabilize((updateReq, updateRes, clientProxyClient, model, context) -> isStabilized(clientProxyClient, model))
+                .stabilize((updateReq, updateRes, clientProxyClient, model, context) -> isCreatingOrUpdateStabilized(
+                    API_UPDATE_DATASOURCE, request, clientProxyClient, model, logger
+                ))
                 .handleError((updateReq, error, clientProxyClient, model, context) -> handleError(
                     model, primaryIdentifier(model), error, context, logger, ResourceModel.TYPE_NAME, API_UPDATE_DATASOURCE
                 ))
@@ -75,20 +74,5 @@ public class UpdateHandler extends BaseHandlerStd {
 
   private UpdateDataSourceResponse updateDataSource(UpdateDataSourceRequest request, ProxyClient<QBusinessClient> proxyClient) {
     return proxyClient.injectCredentialsAndInvokeV2(request, proxyClient.client()::updateDataSource);
-  }
-
-  private boolean isStabilized(
-      ProxyClient<QBusinessClient> proxyClient,
-      ResourceModel model
-  ) {
-    GetDataSourceResponse getDataSourceResponse = getDataSource(model, proxyClient);
-    var status = getDataSourceResponse.status();
-    var hasStabilized = DataSourceStatus.ACTIVE.equals(status);
-
-    logger.log("[INFO] Update has %s for %s with ID: %s, ApplicationId: %s and IndexId: %s".formatted(
-        hasStabilized ? "stabilized" : "not stabilized yet",
-        ResourceModel.TYPE_NAME, model.getDataSourceId(), model.getApplicationId(), model.getIndexId()));
-
-    return hasStabilized;
   }
 }

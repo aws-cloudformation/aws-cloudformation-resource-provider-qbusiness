@@ -50,6 +50,7 @@ public final class DocumentConverter {
     return Document.fromMap(mapBuilder.build());
   }
 
+  @SuppressWarnings("rawtypes")
   private static Document objectToDocument(Object value) {
     if (value instanceof Boolean bool) {
       return Document.fromBoolean(bool);

@@ -1,6 +1,7 @@
 package software.amazon.qbusiness.datasource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -32,6 +33,7 @@ import software.amazon.awssdk.services.qbusiness.QBusinessClient;
 import software.amazon.awssdk.services.qbusiness.model.AttributeValueOperator;
 import software.amazon.awssdk.services.qbusiness.model.DataSourceStatus;
 import software.amazon.awssdk.services.qbusiness.model.DocumentContentOperator;
+import software.amazon.awssdk.services.qbusiness.model.ErrorDetail;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.GetDataSourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.ImageExtractionStatus;
@@ -43,6 +45,7 @@ import software.amazon.awssdk.services.qbusiness.model.UntagResourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UntagResourceResponse;
 import software.amazon.awssdk.services.qbusiness.model.UpdateDataSourceRequest;
 import software.amazon.awssdk.services.qbusiness.model.UpdateDataSourceResponse;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
@@ -251,6 +254,35 @@ public class UpdateHandlerTest extends AbstractTestBase {
         "toremove",
         "stack-i-remove"
     ));
+  }
+
+  @Test
+  public void testThatUpdatingWithErrorMessageResultsInNonStabilized() {
+    when(sdkClient.getDataSource(any(GetDataSourceRequest.class)))
+        .thenReturn(GetDataSourceResponse.builder()
+            .applicationId(APP_ID)
+            .indexId(INDEX_ID)
+            .dataSourceId(DATA_SOURCE_ID)
+            .status(DataSourceStatus.UPDATING)
+            .build()
+        )
+        .thenReturn(GetDataSourceResponse.builder()
+            .applicationId(APP_ID)
+            .indexId(INDEX_ID)
+            .dataSourceId(DATA_SOURCE_ID)
+            .status(DataSourceStatus.UPDATING)
+            .error(ErrorDetail.builder().errorMessage("A problem updating").build())
+            .build()
+        );
+
+    assertThatThrownBy(() -> underTest.handleRequest(
+        proxy, testRequest, new CallbackContext(), proxyClient, logger
+    ))
+        .isInstanceOf(CfnNotStabilizedException.class)
+        .hasMessageContaining("A problem updating");
+
+    verify(sdkClient).updateDataSource(any(UpdateDataSourceRequest.class));
+    verify(sdkClient, times(2)).getDataSource(argThat(getAppMatcher()));
   }
 
   @Test
